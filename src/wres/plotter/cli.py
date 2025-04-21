@@ -1,6 +1,10 @@
 import click
 from .data import load_dataframe
 
+import panel as pn
+pn.extension("plotly")
+pn.extension('tabulator')
+
 @click.command()
 @click.argument(
     "filepath",
@@ -18,7 +22,17 @@ def run(filepath: click.Path = None) -> None:
     if filepath is None:
         return
     df = load_dataframe(filepath)
-    print(df.head())
+
+    dashboard = pn.template.BootstrapTemplate(title="WRES Plotter")
+    dashboard.main.append(
+        pn.widgets.Tabulator(
+            df,
+            sizing_mode="stretch_both",
+            show_index=False,
+            disabled=True
+        )
+    )
+    pn.serve(dashboard.servable())
 
 if __name__ == "__main__":
     run()
