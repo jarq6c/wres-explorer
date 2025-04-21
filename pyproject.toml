@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=77.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wres.plotter"
+authors = [
+    {name = "Jason A. Regina", email = "jason.regina@noaa.gov"},
+]
+description = "Utilities to visualize and explore output from the NOAA Office of Water Prediction's (OWP) Water Resources Evaluation Service (WRES)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Hydrology",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "pandas",
+]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "wres.plotter._version.__version__"}
+
+[project.optional-dependencies]
+develop = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/jarq6c/wres-plotter"
+Documentation = "https://github.com/jarq6c/wres-plotter"
+Repository = "https://github.com/jarq6c/wres-plotter"
+"Bug Tracker" = "https://github.com/jarq6c/wres-plotter/issues"
