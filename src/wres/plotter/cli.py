@@ -23,14 +23,12 @@ def run(filepath: click.Path = None) -> None:
         return
     df = load_dataframe(filepath)
 
-    data_table = pn.Column(
-        pn.pane.Markdown("Data"),
-        pn.widgets.Tabulator(
-            df,
-            show_index=False,
-            disabled=True,
-            width=1280
-    ))
+    data_table = pn.widgets.Tabulator(
+        df,
+        show_index=False,
+        disabled=True,
+        width=1280
+    )
     files = pn.widgets.FileSelector(
         directory="./",
         file_pattern="*.csv.gz",
