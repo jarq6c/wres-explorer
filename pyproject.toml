@@ -23,6 +23,7 @@ classifiers = [
 ]
 dependencies = [
     "pandas",
+    "click"
 ]
 dynamic = ["version"]
 
@@ -37,3 +38,6 @@ Homepage = "https://github.com/jarq6c/wres-plotter"
 Documentation = "https://github.com/jarq6c/wres-plotter"
 Repository = "https://github.com/jarq6c/wres-plotter"
 "Bug Tracker" = "https://github.com/jarq6c/wres-plotter/issues"
+
+[project.scripts]
+wres-plotter = "wres.plotter.cli:run"
