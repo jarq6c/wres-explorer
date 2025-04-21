@@ -23,7 +23,9 @@ classifiers = [
 ]
 dependencies = [
     "pandas",
-    "click"
+    "click",
+    "panel",
+    "plotly"
 ]
 dynamic = ["version"]
 
