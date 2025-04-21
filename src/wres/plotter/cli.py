@@ -1,5 +1,5 @@
 import click
-import pandas as pd
+from .data import load_dataframe
 
 @click.command()
 @click.argument(
@@ -17,7 +17,7 @@ def run(filepath: click.Path = None) -> None:
     """
     if filepath is None:
         return
-    df = pd.read_csv(filepath, dtype=str)
+    df = load_dataframe(filepath)
     print(df.head())
 
 if __name__ == "__main__":
