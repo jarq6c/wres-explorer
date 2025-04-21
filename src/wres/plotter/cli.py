@@ -23,15 +23,26 @@ def run(filepath: click.Path = None) -> None:
         return
     df = load_dataframe(filepath)
 
-    dashboard = pn.template.BootstrapTemplate(title="WRES Plotter")
-    dashboard.main.append(
+    data_table = pn.Column(
+        pn.pane.Markdown("Data"),
         pn.widgets.Tabulator(
             df,
-            sizing_mode="stretch_both",
             show_index=False,
-            disabled=True
+            disabled=True,
+            width=1280
+    ))
+    files = pn.widgets.FileSelector(
+        directory="./",
+        file_pattern="*.csv.gz",
+        only_files=True,
+        value=[str(filepath)]
         )
-    )
+    tabs = pn.Tabs()
+    tabs.append(("File Selector", files))
+    tabs.append(("Data", data_table))
+
+    dashboard = pn.template.BootstrapTemplate(title="WRES Plotter")
+    dashboard.main.append(tabs)
     pn.serve(dashboard.servable())
 
 if __name__ == "__main__":
