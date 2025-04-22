@@ -1,6 +1,5 @@
 """Methods to load and process WRES output."""
-from typing import Type
-import click
+from typing import Type, Iterable
 import pandas as pd
 import geopandas as gpd
 
@@ -70,8 +69,8 @@ WRES_COLUMNS: dict[str, Type] = {
 }
 """WRES columns and data types."""
 
-def load_dataframe(
-        filepath: click.Path,
+def load_dataframes(
+        filepaths: Iterable[str],
         type_mapping: dict[str, Type] = WRES_COLUMNS
         ) -> pd.DataFrame:
     """
@@ -79,8 +78,8 @@ def load_dataframe(
     
     Parameters
     ----------
-    filepath: Path, required
-        Path to file.
+    filepaths: Iterable[str], required
+        Paths to files.
     type_mapping: dict[str, Type], optional
         Mapping from column label to data type.
     
@@ -88,7 +87,10 @@ def load_dataframe(
     -------
     pandas.DataFrame
     """
-    data = pd.read_csv(filepath, dtype=str)
+    data = pd.concat(
+        [pd.read_csv(fp, dtype=str) for fp in filepaths],
+        ignore_index=True
+        )
 
     drop = []
     for c in data:
