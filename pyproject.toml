@@ -3,7 +3,7 @@ requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wres.plotter"
+name = "wres.explorer"
 authors = [
     {name = "Jason A. Regina", email = "jason.regina@noaa.gov"},
 ]
@@ -30,16 +30,16 @@ dependencies = [
 dynamic = ["version"]
 
 [tool.setuptools.dynamic]
-version = {attr = "wres.plotter._version.__version__"}
+version = {attr = "wres.explorer._version.__version__"}
 
 [project.optional-dependencies]
 develop = ["pytest"]
 
 [project.urls]
-Homepage = "https://github.com/jarq6c/wres-plotter"
-Documentation = "https://github.com/jarq6c/wres-plotter"
-Repository = "https://github.com/jarq6c/wres-plotter"
-"Bug Tracker" = "https://github.com/jarq6c/wres-plotter/issues"
+Homepage = "https://github.com/jarq6c/wres-explorer"
+Documentation = "https://github.com/jarq6c/wres-explorer"
+Repository = "https://github.com/jarq6c/wres-explorer"
+"Bug Tracker" = "https://github.com/jarq6c/wres-explorer/issues"
 
 [project.scripts]
-wres-plotter = "wres.plotter.cli:run"
+wres-explorer = "wres.explorer.cli:run"
