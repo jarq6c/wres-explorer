@@ -7,6 +7,156 @@ from src.wres.explorer.data import load_dataframes
 pn.extension("tabulator")
 pn.extension("plotly")
 
+class DataManager:
+    """
+    Handle loading and managing of data.
+    """
+    def __init__(self):
+        self.data: pd.DataFrame = None
+        self.feature_map: pd.DataFrame = None
+    
+    def load_data(self, filepaths: list[str]):
+        if len(filepaths) == 0:
+            self.data = pd.DataFrame({"message": ["no data loaded"]})
+        else:
+            try:
+                self.data = load_dataframes(filepaths)
+                self.feature_map = self.data[[
+                    "LEFT FEATURE NAME",
+                    "LEFT FEATURE DESCRIPTION",
+                    "RIGHT FEATURE NAME",
+                    "LEFT FEATURE WKT"
+                    ]].drop_duplicates().astype(str)
+                self.feature_map["geometry"] = gpd.GeoSeries.from_wkt(
+                    self.feature_map["LEFT FEATURE WKT"])
+                self.feature_map = gpd.GeoDataFrame(self.feature_map)
+            except pd.errors.ParserError:
+                self.data = pd.DataFrame({"message": ["parsing error"]})
+            except KeyError:
+                self.data = pd.DataFrame({"message": ["column error"]})
+
+class Components:
+    """
+    Handle the components of the dashboard.
+
+    Attributes
+    ----------
+    file_selector: pn.widgets.FileSelector
+        File selector widget for selecting data files.
+    load_data_button: pn.widgets.Button
+        Button for loading data.
+    feature_description: pn.pane.Markdown
+        Markdown pane for displaying feature descriptions.
+    tabs: pn.Tabs
+        Tabs for organizing the dashboard content.
+    """
+    def __init__(self):
+        self.file_selector = pn.widgets.FileSelector(
+            directory="./",
+            file_pattern="*.csv.gz",
+            only_files=True,
+            value=[]
+        )
+        self.load_data_button = pn.widgets.Button(
+            name="Load/Reload Data",
+            button_type="primary"
+        )
+        self.feature_description = pn.pane.Markdown(
+            "LEFT FEATURE DESCRIPTION: \n"
+        )
+        self.tabs = pn.Tabs()
+        self.add_tab(
+            "File Selector",
+            pn.Column(self.file_selector, self.load_data_button)
+            )
+        data_table = pn.widgets.Tabulator(
+            pd.DataFrame({"message": ["no data loaded"]}),
+            show_index=False,
+            disabled=True,
+            width=1280,
+            height=720
+        )
+        self.add_tab(
+            "Data Table",
+            data_table
+        )
+        self.left_feature_selector = pn.widgets.AutocompleteInput(
+            name="LEFT FEATURE NAME",
+            options=[],
+            search_strategy="includes",
+            placeholder=f"Select LEFT FEATURE NAME"
+        )
+        self.right_feature_selector = pn.widgets.AutocompleteInput(
+            name="RIGHT FEATURE NAME",
+            options=[],
+            search_strategy="includes",
+            placeholder=f"Select RIGHT FEATURE NAME"
+        )
+        self.add_tab(
+            "Site Selector",
+            pn.Column(self.left_feature_selector, self.right_feature_selector)
+        )
+    
+    def update_data_table(self, data: pd.DataFrame):
+        """
+        Update data table.
+        
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Data to display in the table.
+        
+        Returns
+        -------
+        pn.widgets.Tabulator
+            Tabulator widget displaying the data.
+        """
+        self.tabs[1] = ("Data Table", pn.widgets.Tabulator(
+            data,
+            show_index=False,
+            disabled=True,
+            width=1280,
+            height=720
+        ))
+    
+    def add_tab(self, name: str, content: pn.pane) -> None:
+        """
+        Add a tab to the tabs panel.
+        
+        Parameters
+        ----------
+        name: str
+            Name of the tab.
+        content: pn.pane
+            Content of the tab.
+        """
+        self.tabs.append((name, content))
+
+def serve_dashboard(title: str) -> None:
+    """
+    Serve the dashboard.
+    
+    Returns
+    -------
+    None
+    """
+    # Initialize components
+    components = Components()
+    
+    # Initialize data manager
+    data_manager = DataManager()
+
+    # Load data
+    def update_data(event):
+        data_manager.load_data(components.file_selector.value)
+        components.update_data_table(data_manager.data)
+    pn.bind(update_data, components.load_data_button, watch=True)
+
+    # Serve the dashboard
+    dashboard = pn.template.BootstrapTemplate(title=title)
+    dashboard.main.append(components.tabs)
+    pn.serve(dashboard.servable())
+
 def run():
     # Tabs
     tabs = pn.Tabs()
@@ -203,4 +353,4 @@ def run():
     pn.serve(dashboard.servable())
 
 if __name__ == "__main__":
-    run()
+    serve_dashboard("WRES Explorer")
