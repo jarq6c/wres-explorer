@@ -39,11 +39,12 @@ def run():
                 data = load_dataframes(files.value)
                 feature_map = data[[
                     "LEFT FEATURE NAME",
+                    "LEFT FEATURE DESCRIPTION",
                     "RIGHT FEATURE NAME",
                     "LEFT FEATURE WKT"
                     ]].drop_duplicates().astype(str)
                 feature_map["geometry"] = gpd.GeoSeries.from_wkt(
-                    feature_map["LEFT FEATURE WKT"].astype(str))
+                    feature_map["LEFT FEATURE WKT"])
                 feature_map = gpd.GeoDataFrame(feature_map)
             except pd.errors.ParserError:
                 data = pd.DataFrame({"message": ["parsing error"]})
@@ -69,6 +70,8 @@ def run():
         if not event:
             return update_data_table(event)
         if len(files.value) == 0:
+            return update_data_table(event)
+        if feature_map is None:
             return update_data_table(event)
         
         # Build interface
@@ -96,10 +99,15 @@ def run():
                 size=15,
                 color="cyan"
                 ),
-            customdata=feature_map[["LEFT FEATURE NAME", "RIGHT FEATURE NAME"]],
+            customdata=feature_map[[
+                "LEFT FEATURE NAME",
+                "LEFT FEATURE DESCRIPTION",
+                "RIGHT FEATURE NAME"
+                ]],
             hovertemplate=
+            "LEFT FEATURE DESCRIPTION: %{customdata[1]}<br>"
             "LEFT FEATURE NAME: %{customdata[0]}<br>"
-            "RIGHT FEATURE NAME: %{customdata[1]}<br>"
+            "RIGHT FEATURE NAME: %{customdata[2]}<br>"
             "LONGITUDE: %{lon}<br>"
             "LATITUDE: %{lat}<br>"
         ))
