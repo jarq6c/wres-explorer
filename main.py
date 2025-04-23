@@ -27,6 +27,9 @@ def run():
     # Data table tab
     data: pd.DataFrame = None
     feature_map: pd.DataFrame = None
+    feature_description = pn.pane.Markdown(
+        "LEFT FEATURE DESCRIPTION: \n"
+    )
     def update_data_table(event):
         nonlocal data
         nonlocal feature_map
@@ -46,6 +49,7 @@ def run():
                 feature_map["geometry"] = gpd.GeoSeries.from_wkt(
                     feature_map["LEFT FEATURE WKT"])
                 feature_map = gpd.GeoDataFrame(feature_map)
+                feature_description.object = "LEFT FEATURE DESCRIPTION: \n"
             except pd.errors.ParserError:
                 data = pd.DataFrame({"message": ["parsing error"]})
             except KeyError:
@@ -63,9 +67,6 @@ def run():
     # Site selector tab
     left_feature_name: str = None
     right_feature_name: str = None
-    feature_description = pn.pane.Markdown(
-        "LEFT FEATURE DESCRIPTION: \n"
-    )
     def update_site_selector(event):
         nonlocal feature_map
         nonlocal left_feature_name
@@ -165,6 +166,10 @@ def run():
             right_feature.value = df["RIGHT FEATURE NAME"].iloc[0]
             right_feature_name = df["RIGHT FEATURE NAME"].iloc[0]
             left_feature_name = df["LEFT FEATURE NAME"].iloc[0]
+            feature_description.object = (
+                "LEFT FEATURE DESCRIPTION<br>" +
+                df["LEFT FEATURE DESCRIPTION"].iloc[0]
+            )
         pn.bind(update_right_feature, left=left_feature, watch=True)
 
         # Link right and left feature
@@ -178,6 +183,10 @@ def run():
             left_feature.value = df["LEFT FEATURE NAME"].iloc[0]
             left_feature_name = df["LEFT FEATURE NAME"].iloc[0]
             right_feature_name = df["RIGHT FEATURE NAME"].iloc[0]
+            feature_description.object = (
+                "LEFT FEATURE DESCRIPTION<br>" +
+                df["LEFT FEATURE DESCRIPTION"].iloc[0]
+            )
         pn.bind(update_left_feature, right=right_feature, watch=True)
         
         # Layout
