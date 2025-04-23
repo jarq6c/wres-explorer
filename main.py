@@ -63,6 +63,9 @@ def run():
     # Site selector tab
     left_feature_name: str = None
     right_feature_name: str = None
+    feature_description = pn.pane.Markdown(
+        "LEFT FEATURE DESCRIPTION: \n"
+    )
     def update_site_selector(event):
         nonlocal feature_map
         nonlocal left_feature_name
@@ -129,19 +132,27 @@ def run():
 
         # Link map to features
         def update_map(event):
+            nonlocal left_feature_name
+            nonlocal right_feature_name
+            nonlocal right_feature
+            nonlocal left_feature
             if not event:
-                return "No point clicked"
+                return
             try:
-                print(event)
                 point = event["points"][0]
-                index = point['pointIndex']
-                x = point['x']
-                y = point['y']
+                left_feature_name = point["customdata"][0]
+                left_feature.value = point["customdata"][0]
+                right_feature_name = point["customdata"][2]
+                right_feature.value = point["customdata"][2]
+                feature_description.object = (
+                    "LEFT FEATURE DESCRIPTION<br>" +
+                    point["customdata"][1]
+                )
             except Exception as ex:
-                return f"You clicked the Plotly Chart! I could not determine the point: {ex}"
-            
-            return f"**You clicked point {index} at ({x}, {y}) on the Plotly Chart!**"
-        ichild_view = pn.bind(update_map, site_map.param.click_data)
+                feature_description.object = (
+                    f"Could not determine site selection: {ex}"
+                )
+        pn.bind(update_map, site_map.param.click_data, watch=True)
 
         # Link left and right feature
         def update_right_feature(left):
@@ -173,7 +184,7 @@ def run():
         return pn.Row(pn.Column(
             left_feature,
             right_feature,
-            ichild_view
+            feature_description
         ), site_map)
     tabs.append(("Site Selector", pn.bind(update_site_selector, load_data)))
 
