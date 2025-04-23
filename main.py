@@ -1,8 +1,11 @@
 import panel as pn
 import pandas as pd
+import geopandas as gpd
+import plotly.graph_objects as go
 from src.wres.explorer.data import load_dataframes
 
 pn.extension("tabulator")
+pn.extension("plotly")
 
 def run():
     # Tabs
@@ -39,6 +42,9 @@ def run():
                     "RIGHT FEATURE NAME",
                     "LEFT FEATURE WKT"
                     ]].drop_duplicates().astype(str)
+                feature_map["geometry"] = gpd.GeoSeries.from_wkt(
+                    feature_map["LEFT FEATURE WKT"].astype(str))
+                feature_map = gpd.GeoDataFrame(feature_map)
             except pd.errors.ParserError:
                 data = pd.DataFrame({"message": ["parsing error"]})
             except KeyError:
@@ -56,7 +62,7 @@ def run():
     # Site selector tab
     left_feature_name: str = None
     right_feature_name: str = None
-    def update_map(event):
+    def update_site_selector(event):
         nonlocal feature_map
         nonlocal left_feature_name
         nonlocal right_feature_name
@@ -78,6 +84,56 @@ def run():
             search_strategy="includes",
             placeholder="Select RIGHT FEATURE NAME"
         )
+        
+        # Build site map
+        fig = go.Figure(go.Scattermap(
+            showlegend=False,
+            name="",
+            lat=feature_map["geometry"].y,
+            lon=feature_map["geometry"].x,
+            mode='markers',
+            marker=dict(
+                size=15,
+                color="cyan"
+                ),
+            customdata=feature_map[["LEFT FEATURE NAME", "RIGHT FEATURE NAME"]],
+            hovertemplate=
+            "LEFT FEATURE NAME: %{customdata[0]}<br>"
+            "RIGHT FEATURE NAME: %{customdata[1]}<br>"
+            "LONGITUDE: %{lon}<br>"
+            "LATITUDE: %{lat}<br>"
+        ))
+        fig.update_layout(
+            showlegend=False,
+            height=720,
+            width=1280,
+            margin=dict(l=0, r=0, t=0, b=0),
+            map=dict(
+                style="satellite-streets",
+                center={
+                    "lat": feature_map["geometry"].y.mean(),
+                    "lon": feature_map["geometry"].x.mean()
+                    },
+                zoom=2
+            )
+        )
+        site_map = pn.pane.Plotly(fig)
+
+        # Link map to features
+        def update_map(event):
+            if not event:
+                return "No point clicked"
+            try:
+                print(event)
+                point = event["points"][0]
+                index = point['pointIndex']
+                x = point['x']
+                y = point['y']
+            except Exception as ex:
+                return f"You clicked the Plotly Chart! I could not determine the point: {ex}"
+            
+            return f"**You clicked point {index} at ({x}, {y}) on the Plotly Chart!**"
+        ichild_view = pn.bind(update_map, site_map.param.click_data)
 
         # Link left and right feature
         def update_right_feature(left):
@@ -106,11 +162,12 @@ def run():
         pn.bind(update_left_feature, right=right_feature, watch=True)
         
         # Layout
-        return pn.Column(
+        return pn.Row(pn.Column(
             left_feature,
-            right_feature
-        )
-    tabs.append(("Site Selector", pn.bind(update_map, load_data)))
+            right_feature,
+            ichild_view
+        ), site_map)
+    tabs.append(("Site Selector", pn.bind(update_site_selector, load_data)))
 
     # Build and serve the dashboard
     dashboard = pn.template.BootstrapTemplate(title="WRES Explorer")
