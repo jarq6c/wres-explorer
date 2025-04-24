@@ -123,7 +123,7 @@ class Dashboard:
         )
         self.map_selector = pn.pane.Plotly()
         self.description_pane = pn.pane.Markdown(
-            "LEFT FEATURE DESCRIPTION: \n"
+            "LEFT FEATURE DESCRIPTION\n"
         )
         self.feature_descriptions: list = []
 
@@ -185,6 +185,79 @@ class Dashboard:
                 self.map_selector
             )
         )
+
+        # Metrics plots
+        self.selected_metric = pn.widgets.Select(
+            name="Select Metric",
+            options=[]
+        )
+        self.metrics_pane = pn.pane.Plotly()
+
+        # Link metric selector to metrics pane
+        def update_metrics_plot(event):
+            if not self.selected_metric.value:
+                return
+            if not self.left_feature_selector.value:
+                return
+            # Subset
+            fname = self.left_feature_selector.value
+            mname = self.selected_metric.value
+            df = self.data_manager.data
+            df = df[df["LEFT FEATURE NAME"] == fname]
+            df = df[df["METRIC NAME"] == mname]
+
+            # Plot
+            fig = go.Figure()
+            for period, d in df.groupby("EVALUATION PERIOD", observed=True):
+                nom_x = d[d["SAMPLE QUANTILE"].isna()]["LEAD HOURS"].values
+                nom_y = d[d["SAMPLE QUANTILE"].isna()]["STATISTIC"].values
+                upper = d[d["SAMPLE QUANTILE"] == 0.975]["STATISTIC"].values
+                lower = d[d["SAMPLE QUANTILE"] == 0.025]["STATISTIC"].values
+                if len(nom_y) == len(upper) == len(lower):
+                    error_y = dict(
+                        type="data",
+                        array=upper - nom_y,
+                        arrayminus=nom_y - lower
+                    )
+                else:
+                    error_y = None
+                fig.add_trace(go.Bar(
+                    name=period,
+                    x=nom_x, y=nom_y,
+                    error_y=error_y,
+                    legendgroup="bar_plots",
+                    legendgrouptitle_text="Bar Plots"
+                ))
+            fig.update_xaxes(title="LEAD HOURS")
+            fig.update_yaxes(title=mname)
+            fig.update_layout(
+                height=720,
+                width=1280,
+                margin=dict(l=0, r=0, t=0, b=0)
+            )
+            self.metrics_pane.object = fig
+        pn.bind(
+            update_metrics_plot,
+            self.selected_metric,
+            watch=True
+        )
+        pn.bind(
+            update_metrics_plot,
+            self.left_feature_selector,
+            watch=True
+        )
+
+        # Layout metrics plots
+        self.add_tab(
+            "Metrics Plots",
+            pn.Row(
+                pn.Column(
+                    self.description_pane,
+                    self.selected_metric
+                ),
+                self.metrics_pane
+            )
+        )
     
     def update_metrics_table(
             self,
@@ -198,11 +271,8 @@ class Dashboard:
         ----------
         data: pd.DataFrame
             Data to display in the table.
-        
-        Returns
-        -------
-        pn.widgets.Tabulator
-            Tabulator widget displaying the data.
+        feature_mapping: pd.DataFrame
+            Feature mapping data.
         """
         metric_filters = {
             'LEFT FEATURE NAME': {
@@ -235,6 +305,25 @@ class Dashboard:
             height=720,
             header_filters=metric_filters
         ))
+        
+        # Check for data
+        if "METRIC NAME" not in self.data_manager.data:
+            self.left_feature_selector.options = []
+            self.right_feature_selector.options = []
+            self.feature_descriptions = []
+            self.map_selector.object = go.Figure()
+            self.description_pane.object = (
+                "LEFT FEATURE DESCRIPTION<br>"
+                "No data loaded"
+            )
+            self.selected_metric.options = []
+            self.metrics_pane.object = go.Figure()
+            self.left_feature_selector.value = None
+            self.right_feature_selector.value = None
+            self.selected_metric.value = None
+            return
+        
+        # Update feature selectors
         self.left_feature_selector.options = feature_mapping[
             "LEFT FEATURE NAME"].tolist()
         self.right_feature_selector.options = feature_mapping[
@@ -289,6 +378,10 @@ class Dashboard:
             )
         )
         self.map_selector.object = fig
+
+        # Update metrics selection
+        self.selected_metric.options = (
+            self.data_manager.data["METRIC NAME"].unique().tolist())
     
     def add_tab(self, name: str, content: pn.pane) -> None:
         """
