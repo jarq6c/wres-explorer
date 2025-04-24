@@ -94,6 +94,11 @@ class Components:
             search_strategy="includes",
             placeholder=f"Select RIGHT FEATURE NAME"
         )
+        self.map_selector = pn.pane.Plotly()
+        self.description_pane = pn.pane.Markdown(
+            "LEFT FEATURE DESCRIPTION: \n"
+        )
+        self.feature_descriptions: list = []
 
         # Link feature selectors
         def update_left(right_value) -> None:
@@ -103,22 +108,55 @@ class Components:
             self.left_feature_selector.value = (
                 self.left_feature_selector.options[idx]
                 )
+            self.description_pane.object = (
+                    "LEFT FEATURE DESCRIPTION<br>" +
+                    self.feature_descriptions[idx]
+                )
         def update_right(left_value) -> None:
-            if left_value is None:
+            if not left_value:
                 return
             idx = self.left_feature_selector.options.index(left_value)
             self.right_feature_selector.value = (
                 self.right_feature_selector.options[idx]
                 )
+            self.description_pane.object = (
+                    "LEFT FEATURE DESCRIPTION<br>" +
+                    self.feature_descriptions[idx]
+                )
         pn.bind(update_left, right_value=self.right_feature_selector,
                 watch=True)
         pn.bind(update_right, left_value=self.left_feature_selector,
                 watch=True)
+        
+        # Link map to feature selectors
+        def update_map(event):
+            if not event:
+                return
+            try:
+                point = event["points"][0]
+                self.left_feature_selector.value = point["customdata"][0]
+                self.right_feature_selector.value = point["customdata"][2]
+                self.description_pane.object = (
+                    "LEFT FEATURE DESCRIPTION<br>" +
+                    point["customdata"][1]
+                )
+            except Exception as ex:
+                self.description_pane.object = (
+                    f"Could not determine site selection: {ex}"
+                )
+        pn.bind(update_map, self.map_selector.param.click_data, watch=True)
 
         # Layout feature selectors
         self.add_tab(
             "Feature Selector",
-            pn.Column(self.left_feature_selector, self.right_feature_selector)
+            pn.Row(
+                pn.Column(
+                    self.left_feature_selector,
+                    self.right_feature_selector,
+                    self.description_pane
+                    ),
+                self.map_selector
+            )
         )
     
     def update_metrics_table(
@@ -150,6 +188,47 @@ class Components:
             "LEFT FEATURE NAME"].tolist()
         self.right_feature_selector.options = feature_mapping[
             "RIGHT FEATURE NAME"].tolist()
+        self.feature_descriptions = feature_mapping[
+            "LEFT FEATURE DESCRIPTION"].tolist()
+        
+        # Build site map
+        fig = go.Figure(go.Scattermap(
+            showlegend=False,
+            name="",
+            lat=feature_mapping["geometry"].y,
+            lon=feature_mapping["geometry"].x,
+            mode='markers',
+            marker=dict(
+                size=15,
+                color="cyan"
+                ),
+            customdata=feature_mapping[[
+                "LEFT FEATURE NAME",
+                "LEFT FEATURE DESCRIPTION",
+                "RIGHT FEATURE NAME"
+                ]],
+            hovertemplate=
+            "LEFT FEATURE DESCRIPTION: %{customdata[1]}<br>"
+            "LEFT FEATURE NAME: %{customdata[0]}<br>"
+            "RIGHT FEATURE NAME: %{customdata[2]}<br>"
+            "LONGITUDE: %{lon}<br>"
+            "LATITUDE: %{lat}<br>"
+        ))
+        fig.update_layout(
+            showlegend=False,
+            height=720,
+            width=1280,
+            margin=dict(l=0, r=0, t=0, b=0),
+            map=dict(
+                style="satellite-streets",
+                center={
+                    "lat": feature_mapping["geometry"].y.mean(),
+                    "lon": feature_mapping["geometry"].x.mean()
+                    },
+                zoom=2
+            )
+        )
+        self.map_selector.object = fig
     
     def add_tab(self, name: str, content: pn.pane) -> None:
         """
