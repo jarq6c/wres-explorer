@@ -69,7 +69,7 @@ class Components:
             "File Selector",
             pn.Column(self.file_selector, self.load_data_button)
             )
-        data_table = pn.widgets.Tabulator(
+        metrics_table = pn.widgets.Tabulator(
             pd.DataFrame({"message": ["no data loaded"]}),
             show_index=False,
             disabled=True,
@@ -78,7 +78,7 @@ class Components:
         )
         self.add_tab(
             "Metrics Table",
-            data_table
+            metrics_table
         )
 
         # Feature selectors
@@ -121,13 +121,13 @@ class Components:
             pn.Column(self.left_feature_selector, self.right_feature_selector)
         )
     
-    def update_data_table(
+    def update_metrics_table(
             self,
             data: pd.DataFrame,
             feature_mapping: pd.DataFrame
             ) -> None:
         """
-        Update data table.
+        Update metrics table.
         
         Parameters
         ----------
@@ -181,7 +181,7 @@ def serve_dashboard(title: str) -> None:
     # Load data
     def update_data(event):
         data_manager.load_data(components.file_selector.value)
-        components.update_data_table(
+        components.update_metrics_table(
             data_manager.data, data_manager.feature_mapping)
     pn.bind(update_data, components.load_data_button, watch=True)
 
@@ -207,13 +207,13 @@ def run():
         )
     tabs.append(("File Selector", pn.Column(files, load_data)))
 
-    # Data table tab
+    # Metrics table tab
     data: pd.DataFrame = None
     feature_map: pd.DataFrame = None
     feature_description = pn.pane.Markdown(
         "LEFT FEATURE DESCRIPTION: \n"
     )
-    def update_data_table(event):
+    def update_metrics_table(event):
         nonlocal data
         nonlocal feature_map
         if not event:
@@ -245,7 +245,7 @@ def run():
             width=1280,
             height=720
         )
-    tabs.append(("Metrics Table", pn.bind(update_data_table, load_data)))
+    tabs.append(("Metrics Table", pn.bind(update_metrics_table, load_data)))
 
     # Site selector tab
     left_feature_name: str = None
@@ -255,11 +255,11 @@ def run():
         nonlocal left_feature_name
         nonlocal right_feature_name
         if not event:
-            return update_data_table(event)
+            return update_metrics_table(event)
         if len(files.value) == 0:
-            return update_data_table(event)
+            return update_metrics_table(event)
         if feature_map is None:
-            return update_data_table(event)
+            return update_metrics_table(event)
         
         # Build interface
         left_feature = pn.widgets.AutocompleteInput(
