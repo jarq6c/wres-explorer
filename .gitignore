@@ -135,6 +135,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+miniconda3/
 
 # Spyder project settings
 .spyderproject
