@@ -414,9 +414,7 @@ def run() -> None:
     """
     Visualize and explore metrics output from WRES CSV2 formatted output.
 
-    Example:
-
-    wres-explorer
+    Run "wres-explorer" from the command-line, ctrl+c to stop the server.:
     """
     # Start interface
     Dashboard("WRES CSV Explorer").serve()
