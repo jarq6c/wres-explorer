@@ -9,7 +9,14 @@ pn.extension("plotly")
 
 class DataManager:
     """
-    Handle loading and managing of data.
+    Handle the data loading and processing.
+
+    Attributes
+    ----------
+    data: pd.DataFrame
+        Data loaded from the CSV files.
+    feature_mapping: pd.DataFrame
+        Mapping of features to their descriptions and geometries.
     """
     def __init__(self):
         self.data: pd.DataFrame = None
@@ -37,18 +44,30 @@ class DataManager:
 
 class Dashboard:
     """
-    Handle the components of the dashboard.
-
+    Dashboard for displaying WRES CSV data.
+    
     Attributes
     ----------
+    title: str
+        Title of the dashboard.
+    data_manager: DataManager
+        Instance of DataManager to handle data loading.
     file_selector: pn.widgets.FileSelector
-        File selector widget for selecting data files.
+        File selector widget for selecting CSV files.
     load_data_button: pn.widgets.Button
-        Button for loading data.
-    feature_description: pn.pane.Markdown
-        Markdown pane for displaying feature descriptions.
+        Button to load/reload data.
     tabs: pn.Tabs
-        Tabs for organizing the dashboard content.
+        Tabs for displaying different sections of the dashboard.
+    left_feature_selector: pn.widgets.AutocompleteInput
+        Autocomplete input for selecting left feature.
+    right_feature_selector: pn.widgets.AutocompleteInput
+        Autocomplete input for selecting right feature.
+    map_selector: pn.pane.Plotly
+        Pane for displaying the map of features.
+    description_pane: pn.pane.Markdown
+        Pane for displaying feature descriptions.
+    feature_descriptions: list
+        List of feature descriptions.
     """
     def __init__(self, title: str):
         self.title = title
@@ -62,9 +81,6 @@ class Dashboard:
         self.load_data_button = pn.widgets.Button(
             name="Load/Reload Data",
             button_type="primary"
-        )
-        self.feature_description = pn.pane.Markdown(
-            "LEFT FEATURE DESCRIPTION: \n"
         )
         self.tabs = pn.Tabs()
         self.add_tab(
