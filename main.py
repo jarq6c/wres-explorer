@@ -409,4 +409,4 @@ class Dashboard:
         pn.serve(template.servable())
 
 if __name__ == "__main__":
-    Dashboard("WRES CSV Viewer").serve()
+    Dashboard("WRES CSV Explorer").serve()
