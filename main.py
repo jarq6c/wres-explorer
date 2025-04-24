@@ -177,12 +177,36 @@ class Components:
         pn.widgets.Tabulator
             Tabulator widget displaying the data.
         """
+        metric_filters = {
+            'LEFT FEATURE NAME': {
+                'type': 'input',
+                'func': 'like',
+                'placeholder':
+                'Enter feature name'
+                },
+            'RIGHT FEATURE NAME': {
+                'type': 'input',
+                'func': 'like',
+                'placeholder': 'Enter feature name'
+                },
+            'LEFT FEATURE DESCRIPTION': {
+                'type': 'input',
+                'func': 'like',
+                'placeholder': 'Enter description'
+                },
+            'METRIC NAME': {
+                'type': 'input',
+                'func': 'like',
+                'placeholder': 'Enter metric name'
+                }
+        }
         self.tabs[1] = ("Metrics Table", pn.widgets.Tabulator(
             data,
             show_index=False,
             disabled=True,
             width=1280,
-            height=720
+            height=720,
+            header_filters=metric_filters
         ))
         self.left_feature_selector.options = feature_mapping[
             "LEFT FEATURE NAME"].tolist()
