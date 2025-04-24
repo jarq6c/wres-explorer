@@ -226,6 +226,11 @@ class Components:
                 size=15,
                 color="cyan"
                 ),
+            selected=dict(
+                marker=dict(
+                    color="magenta"
+                )
+            ),
             customdata=feature_mapping[[
                 "LEFT FEATURE NAME",
                 "LEFT FEATURE DESCRIPTION",
@@ -250,6 +255,10 @@ class Components:
                     "lon": feature_mapping["geometry"].x.mean()
                     },
                 zoom=2
+            ),
+            clickmode="event+select",
+            modebar=dict(
+                remove=["lasso", "select"]
             )
         )
         self.map_selector.object = fig
