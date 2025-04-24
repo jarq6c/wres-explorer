@@ -13,7 +13,7 @@ class DataManager:
     """
     def __init__(self):
         self.data: pd.DataFrame = None
-        self.feature_map: pd.DataFrame = None
+        self.feature_mapping: pd.DataFrame = None
     
     def load_data(self, filepaths: list[str]):
         if len(filepaths) == 0:
@@ -21,15 +21,15 @@ class DataManager:
         else:
             try:
                 self.data = load_dataframes(filepaths)
-                self.feature_map = self.data[[
+                self.feature_mapping = self.data[[
                     "LEFT FEATURE NAME",
                     "LEFT FEATURE DESCRIPTION",
                     "RIGHT FEATURE NAME",
                     "LEFT FEATURE WKT"
                     ]].drop_duplicates().astype(str)
-                self.feature_map["geometry"] = gpd.GeoSeries.from_wkt(
-                    self.feature_map["LEFT FEATURE WKT"])
-                self.feature_map = gpd.GeoDataFrame(self.feature_map)
+                self.feature_mapping["geometry"] = gpd.GeoSeries.from_wkt(
+                    self.feature_mapping["LEFT FEATURE WKT"])
+                self.feature_mapping = gpd.GeoDataFrame(self.feature_mapping)
             except pd.errors.ParserError:
                 self.data = pd.DataFrame({"message": ["parsing error"]})
             except KeyError:
@@ -77,9 +77,11 @@ class Components:
             height=720
         )
         self.add_tab(
-            "Data Table",
+            "Metrics Table",
             data_table
         )
+
+        # Feature selectors
         self.left_feature_selector = pn.widgets.AutocompleteInput(
             name="LEFT FEATURE NAME",
             options=[],
@@ -92,12 +94,38 @@ class Components:
             search_strategy="includes",
             placeholder=f"Select RIGHT FEATURE NAME"
         )
+
+        # Link feature selectors
+        def update_left(right_value) -> None:
+            if right_value is None:
+                return
+            idx = self.right_feature_selector.options.index(right_value)
+            self.left_feature_selector.value = (
+                self.left_feature_selector.options[idx]
+                )
+        def update_right(left_value) -> None:
+            if left_value is None:
+                return
+            idx = self.left_feature_selector.options.index(left_value)
+            self.right_feature_selector.value = (
+                self.right_feature_selector.options[idx]
+                )
+        pn.bind(update_left, right_value=self.right_feature_selector,
+                watch=True)
+        pn.bind(update_right, left_value=self.left_feature_selector,
+                watch=True)
+
+        # Layout feature selectors
         self.add_tab(
-            "Site Selector",
+            "Feature Selector",
             pn.Column(self.left_feature_selector, self.right_feature_selector)
         )
     
-    def update_data_table(self, data: pd.DataFrame):
+    def update_data_table(
+            self,
+            data: pd.DataFrame,
+            feature_mapping: pd.DataFrame
+            ) -> None:
         """
         Update data table.
         
@@ -111,13 +139,17 @@ class Components:
         pn.widgets.Tabulator
             Tabulator widget displaying the data.
         """
-        self.tabs[1] = ("Data Table", pn.widgets.Tabulator(
+        self.tabs[1] = ("Metrics Table", pn.widgets.Tabulator(
             data,
             show_index=False,
             disabled=True,
             width=1280,
             height=720
         ))
+        self.left_feature_selector.options = feature_mapping[
+            "LEFT FEATURE NAME"].tolist()
+        self.right_feature_selector.options = feature_mapping[
+            "RIGHT FEATURE NAME"].tolist()
     
     def add_tab(self, name: str, content: pn.pane) -> None:
         """
@@ -149,7 +181,8 @@ def serve_dashboard(title: str) -> None:
     # Load data
     def update_data(event):
         data_manager.load_data(components.file_selector.value)
-        components.update_data_table(data_manager.data)
+        components.update_data_table(
+            data_manager.data, data_manager.feature_mapping)
     pn.bind(update_data, components.load_data_button, watch=True)
 
     # Serve the dashboard
@@ -212,7 +245,7 @@ def run():
             width=1280,
             height=720
         )
-    tabs.append(("Data Table", pn.bind(update_data_table, load_data)))
+    tabs.append(("Metrics Table", pn.bind(update_data_table, load_data)))
 
     # Site selector tab
     left_feature_name: str = None
@@ -353,4 +386,4 @@ def run():
     pn.serve(dashboard.servable())
 
 if __name__ == "__main__":
-    serve_dashboard("WRES Explorer")
+    serve_dashboard("WRES CSV Viewer")
