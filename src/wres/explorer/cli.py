@@ -72,6 +72,83 @@ class Widgets:
         )
         self.metrics_pane = pn.pane.Plotly()
 
+class Layout:
+    """
+    Layout for the dashboard.
+    
+    Attributes
+    ----------
+    widgets: Widgets
+        Instance of Widgets to create the layout.
+    tabs: pn.Tabs
+        Dashboard tabs.
+    template: pn.template
+        Servable dashboard with widgets laid out.
+    """
+    def __init__(self, title: str, widgets: Widgets):
+        """
+        Initialize the layout of the dashboard.
+        
+        Parameters
+        ----------
+        title: str
+            Dashboard title.
+        widgets: Widgets
+            Instance of Widgets to create the layout.
+        """
+        self.widgets = widgets
+        self.tabs = pn.Tabs()
+        self.add_tab(
+            "File Selector",
+            pn.Column(self.widgets.file_selector, self.widgets.load_data_button)
+            )
+        self.add_tab(
+            "Metrics Table",
+            self.widgets.metrics_table
+        )
+        self.add_tab(
+            "Feature Selector",
+            pn.Row(
+                pn.Column(
+                    self.widgets.left_feature_selector,
+                    self.widgets.right_feature_selector,
+                    self.widgets.description_pane
+                    ),
+                self.widgets.map_selector
+            )
+        )
+        self.add_tab(
+            "Metrics Plots",
+            pn.Row(
+                pn.Column(
+                    self.widgets.description_pane,
+                    self.widgets.selected_metric
+                ),
+                self.widgets.metrics_pane
+            )
+        )
+        self.template = pn.template.BootstrapTemplate(title=title)
+        self.template.main.append(self.tabs)
+    
+    def add_tab(self, name: str, content: pn.pane) -> None:
+        """
+        Add a tab to the tabs panel.
+        
+        Parameters
+        ----------
+        name: str
+            Name of the tab.
+        content: pn.pane
+            Content of the tab.
+        """
+        self.tabs.append((name, content))
+    
+    def serve(self) -> None:
+        """
+        Serve the dashboard.
+        """
+        pn.serve(self.template) 
+
 class Dashboard:
     """
     Dashboard for displaying WRES CSV data.
@@ -453,7 +530,8 @@ def run() -> None:
     Run "wres-explorer" from the command-line, ctrl+c to stop the server.:
     """
     # Start interface
-    Dashboard("WRES CSV Explorer").serve()
+    # Dashboard("WRES CSV Explorer").serve()
+    Layout("Test DB", Widgets()).serve()
 
 if __name__ == "__main__":
     run()
