@@ -122,3 +122,38 @@ def load_dataframes(
     data["LEAD HOURS MAX"] = latest.astype(int)
 
     return data.drop(drop, axis=1)
+
+class DataManager:
+    """
+    Handle the data loading and processing.
+
+    Attributes
+    ----------
+    data: pd.DataFrame
+        Data loaded from the CSV files.
+    feature_mapping: pd.DataFrame
+        Mapping of features to their descriptions and geometries.
+    """
+    def __init__(self):
+        self.data: pd.DataFrame = None
+        self.feature_mapping: pd.DataFrame = None
+    
+    def load_data(self, filepaths: list[str]):
+        if len(filepaths) == 0:
+            self.data = pd.DataFrame({"message": ["no data loaded"]})
+        else:
+            try:
+                self.data = load_dataframes(filepaths)
+                self.feature_mapping = self.data[[
+                    "LEFT FEATURE NAME",
+                    "LEFT FEATURE DESCRIPTION",
+                    "RIGHT FEATURE NAME",
+                    "LEFT FEATURE WKT"
+                    ]].drop_duplicates().astype(str)
+                self.feature_mapping["geometry"] = gpd.GeoSeries.from_wkt(
+                    self.feature_mapping["LEFT FEATURE WKT"])
+                self.feature_mapping = gpd.GeoDataFrame(self.feature_mapping)
+            except pd.errors.ParserError:
+                self.data = pd.DataFrame({"message": ["parsing error"]})
+            except KeyError:
+                self.data = pd.DataFrame({"message": ["column error"]})
