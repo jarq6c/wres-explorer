@@ -118,6 +118,7 @@ def load_dataframes(
     ).astype(str).astype("category")
     earliest = data["EARLIEST LEAD DURATION EXCLUSIVE"].str.extract("(\\d+)")
     latest = data["LATEST LEAD DURATION INCLUSIVE"].str.extract("(\\d+)")
-    data["LEAD HOURS"] = (earliest + "-" + latest).astype("category")
+    data["LEAD HOURS MIN"] = earliest.astype(int)
+    data["LEAD HOURS MAX"] = latest.astype(int)
 
     return data.drop(drop, axis=1)
