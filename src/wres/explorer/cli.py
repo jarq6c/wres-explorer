@@ -227,7 +227,7 @@ class Dashboard:
                     x=nom_x, y=nom_y,
                     error_y=error_y,
                     legendgroup="bar_plots",
-                    legendgrouptitle_text="Bar Plots"
+                    legendgrouptitle_text="Evaluation Period"
                 ))
             fig.update_xaxes(title="LEAD HOURS")
             fig.update_yaxes(title=mname)
