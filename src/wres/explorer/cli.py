@@ -149,6 +149,67 @@ class Layout:
         """
         pn.serve(self.template) 
 
+import geopandas as gpd
+
+def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
+    """
+    Generate a map of points.
+
+    Parameters
+    ----------
+    geodata: geopandas.GeoDataFrame
+        One-to-One feature mapping with WRES CSV2-compatible column names.
+        Required columns include: ['geometry', 'LEFT FEATURE NAME', 
+        'LEFT FEATURE DESCRIPTION', 'RIGHT FEATURE NAME', 'LONGITUDE',
+        'LATITUDE']
+    """
+    fig = go.Figure(go.Scattermap(
+        showlegend=False,
+        name="",
+        lat=geodata["geometry"].y,
+        lon=geodata["geometry"].x,
+        mode='markers',
+        marker=dict(
+            size=15,
+            color="cyan"
+            ),
+        selected=dict(
+            marker=dict(
+                color="magenta"
+            )
+        ),
+        customdata=geodata[[
+            "LEFT FEATURE NAME",
+            "LEFT FEATURE DESCRIPTION",
+            "RIGHT FEATURE NAME"
+            ]],
+        hovertemplate=
+        "LEFT FEATURE DESCRIPTION: %{customdata[1]}<br>"
+        "LEFT FEATURE NAME: %{customdata[0]}<br>"
+        "RIGHT FEATURE NAME: %{customdata[2]}<br>"
+        "LONGITUDE: %{lon}<br>"
+        "LATITUDE: %{lat}<br>"
+    ))
+    fig.update_layout(
+        showlegend=False,
+        height=720,
+        width=1280,
+        margin=dict(l=0, r=0, t=0, b=0),
+        map=dict(
+            style="satellite-streets",
+            center={
+                "lat": geodata["geometry"].y.mean(),
+                "lon": geodata["geometry"].x.mean()
+                },
+            zoom=2
+        ),
+        clickmode="event+select",
+        modebar=dict(
+            remove=["lasso", "select"]
+        )
+    )
+    return fig
+
 class Dashboard:
     """
     Dashboard for displaying WRES CSV data.
