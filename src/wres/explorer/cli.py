@@ -210,7 +210,9 @@ class Dashboard:
             # Plot
             fig = go.Figure()
             for period, d in df.groupby("EVALUATION PERIOD", observed=True):
-                nom_x = d[d["SAMPLE QUANTILE"].isna()]["LEAD HOURS"].values
+                xmin = d[d["SAMPLE QUANTILE"].isna()]["LEAD HOURS MIN"].values
+                xmax = d[d["SAMPLE QUANTILE"].isna()]["LEAD HOURS MAX"].values
+                xticks = [f"{e}-{l}" for e, l in zip(sorted(xmin), sorted(xmax))]
                 nom_y = d[d["SAMPLE QUANTILE"].isna()]["STATISTIC"].values
                 upper = d[d["SAMPLE QUANTILE"] == 0.975]["STATISTIC"].values
                 lower = d[d["SAMPLE QUANTILE"] == 0.025]["STATISTIC"].values
@@ -224,7 +226,7 @@ class Dashboard:
                     error_y = None
                 fig.add_trace(go.Bar(
                     name=period,
-                    x=nom_x, y=nom_y,
+                    x=xmin, y=nom_y,
                     error_y=error_y,
                     legendgroup="bar_plots",
                     legendgrouptitle_text="Evaluation Period"
@@ -234,7 +236,12 @@ class Dashboard:
             fig.update_layout(
                 height=720,
                 width=1280,
-                margin=dict(l=0, r=0, t=0, b=0)
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(
+                    tickmode="array",
+                    tickvals=sorted(xmin),
+                    ticktext=xticks
+                )
             )
             self.metrics_pane.object = fig
         pn.bind(
