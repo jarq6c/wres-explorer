@@ -156,7 +156,7 @@ class Layout:
     
     def servable(self) -> BootstrapTemplate:
         """
-        Serve the dashboard.
+        Serve the layout.
         """
         return self.template.servable()
 
@@ -188,6 +188,10 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
         'LEFT FEATURE DESCRIPTION', 'RIGHT FEATURE NAME', 'LONGITUDE',
         'LATITUDE']
     """
+    if "geometry" not in geodata:
+        return go.Figure()
+    
+    # Build map
     fig = go.Figure(go.Scattermap(
         showlegend=False,
         name="",
@@ -303,6 +307,29 @@ def generate_metrics_plot(
     return fig
 
 class Dashboard:
+    def __init__(self, title: str):
+        self.widgets = Widgets()
+        self.layout = Layout(title, self.widgets)
+        self.data_manager = DataManager()
+
+        # Callback for loading data
+        def load_data(event):
+            self.data_manager.load_data(self.widgets.file_selector.value)
+            self.layout.update_metrics_table(
+                self.data_manager.data
+            )
+            self.widgets.map_selector.object = generate_map(
+                self.data_manager.feature_mapping
+            )
+        pn.bind(load_data, self.widgets.load_data_button, watch=True)
+    
+    def servable(self) -> BootstrapTemplate:
+        """
+        Serve the dashboard.
+        """
+        return self.layout.template.servable()
+
+class OldDashboard:
     """
     Dashboard for displaying WRES CSV data.
     
@@ -683,8 +710,8 @@ def run() -> None:
     Run "wres-explorer" from the command-line, ctrl+c to stop the server.:
     """
     # Start interface
-    # Dashboard("WRES CSV Explorer").serve()
-    pn.serve(Layout("Test DB", Widgets()).servable())
+    # OldDashboard("WRES CSV Explorer").serve()
+    pn.serve(Dashboard("Test DB").servable())
 
 if __name__ == "__main__":
     run()

@@ -141,6 +141,8 @@ class DataManager:
     def load_data(self, filepaths: list[str]):
         if len(filepaths) == 0:
             self.data = pd.DataFrame({"message": ["no data loaded"]})
+            self.feature_mapping = pd.DataFrame(
+                {"message": ["no data loaded"]})
         else:
             try:
                 self.data = load_dataframes(filepaths)
