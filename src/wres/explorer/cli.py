@@ -321,7 +321,20 @@ class Dashboard:
             self.widgets.map_selector.object = generate_map(
                 self.data_manager.feature_mapping
             )
+            self.update_feature_selectors()
         pn.bind(load_data, self.widgets.load_data_button, watch=True)
+    
+    def update_feature_selectors(self) -> None:
+        if "LEFT FEATURE NAME" not in self.data_manager.feature_mapping:
+            self.widgets.left_feature_selector.options = []
+            self.widgets.right_feature_selector.options = []
+            return
+        self.widgets.left_feature_selector.options = (
+            self.data_manager.feature_mapping[
+                "LEFT FEATURE NAME"].tolist())
+        self.widgets.right_feature_selector.options = (
+            self.data_manager.feature_mapping[
+                "RIGHT FEATURE NAME"].tolist())
     
     def servable(self) -> BootstrapTemplate:
         """
