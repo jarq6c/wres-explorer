@@ -236,7 +236,8 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
         clickmode="event+select",
         modebar=dict(
             remove=["lasso", "select"]
-        )
+        ),
+        dragmode="zoom"
     )
     return fig
 
