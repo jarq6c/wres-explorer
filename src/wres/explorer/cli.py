@@ -25,8 +25,6 @@ class Widgets:
         Pane for displaying the map of features.
     description_pane: pn.pane.Markdown
         Pane for displaying feature descriptions.
-    metrics_table: pn.widgets.Tabulator
-        Table for displaying metrics data.
     selected_metric: pn.widgets.Select
         Select widget for selecting metrics.
     metrics_pane: pn.pane.Plotly
@@ -42,13 +40,6 @@ class Widgets:
         self.load_data_button = pn.widgets.Button(
             name="Load/Reload Data",
             button_type="primary"
-        )
-        self.metrics_table = pn.widgets.Tabulator(
-            pd.DataFrame({"message": ["no data loaded"]}),
-            show_index=False,
-            disabled=True,
-            width=1280,
-            height=720
         )
         self.left_feature_selector = pn.widgets.AutocompleteInput(
             name="LEFT FEATURE NAME",
@@ -71,6 +62,24 @@ class Widgets:
             options=[]
         )
         self.metrics_pane = pn.pane.Plotly()
+    
+    @staticmethod
+    def build_metrics_table(data: pd.DataFrame) -> None:
+        """
+        Build a metrics table with the provided data.
+        
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Data to display in the metrics table.
+        """
+        return pn.widgets.Tabulator(
+            data,
+            show_index=False,
+            disabled=True,
+            width=1280,
+            height=720
+        )
 
 class Layout:
     """
@@ -104,8 +113,9 @@ class Layout:
             )
         self.add_tab(
             "Metrics Table",
-            self.widgets.metrics_table
-        )
+            self.widgets.build_metrics_table(
+                pd.DataFrame({"message": ["no data loaded"]})
+        ))
         self.add_tab(
             "Feature Selector",
             pn.Row(
@@ -147,7 +157,21 @@ class Layout:
         """
         Serve the dashboard.
         """
-        pn.serve(self.template) 
+        pn.serve(self.template)
+    
+    def update_metrics_table(self, data: pd.DataFrame) -> None:
+        """
+        Update metrics table with new data.
+        
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Data to display in the metrics table.
+        """
+        self.tabs[1] = (
+            "Metrics Table",
+            self.widgets.build_metrics_table(data)
+            )
 
 import geopandas as gpd
 
@@ -206,6 +230,73 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
         clickmode="event+select",
         modebar=dict(
             remove=["lasso", "select"]
+        )
+    )
+    return fig
+
+def generate_metrics_plot(
+        data: pd.DataFrame,
+        left_feature_name: str,
+        selected_metric: str
+    ) -> go.Figure:
+    """
+    Generate a metrics plot.
+
+    Parameters
+    ----------
+    data: pd.DataFrame
+        Data containing metrics information.
+    left_feature_name: str
+        Name of the left feature to filter the data.
+    selected_metric: str
+        Name of the metric to plot.
+
+    Returns
+    -------
+    go.Figure
+        Plotly figure object containing the metrics plot.
+    """
+    # Subset data for the selected feature and metric
+    df = data[data["LEFT FEATURE NAME"] == left_feature_name]
+    df = df[df["METRIC NAME"] == selected_metric]
+
+    fig = go.Figure()
+    
+    for period, d in df.groupby("EVALUATION PERIOD", observed=True):
+        xmin = d[d["SAMPLE QUANTILE"].isna()]["LEAD HOURS MIN"].values
+        xmax = d[d["SAMPLE QUANTILE"].isna()]["LEAD HOURS MAX"].values
+        xticks = [f"{e}-{l}" for e, l in zip(sorted(xmin), sorted(xmax))]
+        nom_y = d[d["SAMPLE QUANTILE"].isna()]["STATISTIC"].values
+        upper = d[d["SAMPLE QUANTILE"] == 0.975]["STATISTIC"].values
+        lower = d[d["SAMPLE QUANTILE"] == 0.025]["STATISTIC"].values
+        
+        if len(nom_y) == len(upper) == len(lower):
+            error_y = dict(
+                type="data",
+                array=upper - nom_y,
+                arrayminus=nom_y - lower
+            )
+        else:
+            error_y = None
+        
+        fig.add_trace(go.Bar(
+            name=period,
+            x=xmin, y=nom_y,
+            error_y=error_y,
+            legendgroup="bar_plots",
+            legendgrouptitle_text="Evaluation Period"
+        ))
+    
+    fig.update_xaxes(title="LEAD HOURS")
+    fig.update_yaxes(title=selected_metric)
+    fig.update_layout(
+        height=720,
+        width=1280,
+        margin=dict(l=0, r=0, t=0, b=0),
+        xaxis=dict(
+            tickmode="array",
+            tickvals=sorted(xmin),
+            ticktext=xticks
         )
     )
     return fig
