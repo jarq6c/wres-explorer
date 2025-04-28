@@ -1,5 +1,6 @@
 import click
 import panel as pn
+from panel.template import BootstrapTemplate
 import pandas as pd
 import plotly.graph_objects as go
 from .data import DataManager
@@ -137,7 +138,7 @@ class Layout:
                 self.widgets.metrics_pane
             )
         )
-        self.template = pn.template.BootstrapTemplate(title=title)
+        self.template = BootstrapTemplate(title=title)
         self.template.main.append(self.tabs)
     
     def add_tab(self, name: str, content: pn.pane) -> None:
@@ -153,12 +154,12 @@ class Layout:
         """
         self.tabs.append((name, content))
     
-    def serve(self) -> None:
+    def servable(self) -> BootstrapTemplate:
         """
         Serve the dashboard.
         """
-        pn.serve(self.template)
-    
+        return self.template.servable()
+
     def update_metrics_table(self, data: pd.DataFrame) -> None:
         """
         Update metrics table with new data.
@@ -683,7 +684,7 @@ def run() -> None:
     """
     # Start interface
     # Dashboard("WRES CSV Explorer").serve()
-    Layout("Test DB", Widgets()).serve()
+    pn.serve(Layout("Test DB", Widgets()).servable())
 
 if __name__ == "__main__":
     run()
