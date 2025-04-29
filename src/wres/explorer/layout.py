@@ -114,7 +114,8 @@ class Layout:
             self,
             data: pd.DataFrame,
             table_builder: TableBuilder,
-            left_feature_name: str | None = None
+            left_feature_name: str | None = None,
+            metric_name: str | None = None
             ) -> None:
         """
         Update metrics table with new data.
@@ -124,10 +125,11 @@ class Layout:
         data: pd.DataFrame
             Data to display in the metrics table.
         """
+        df = data
         if left_feature_name is not None:
-            df = data[data["LEFT FEATURE NAME"] == left_feature_name]
-        else:
-            df = data
+            df = df[df["LEFT FEATURE NAME"] == left_feature_name]
+        if metric_name is not None:
+            df = df[df["METRIC NAME"] == metric_name]
 
         self.tabs[4] = (
             "Metrics Table",

@@ -111,8 +111,8 @@ class Callbacks:
             watch=True
         )
     
-        # Filter tables
-        def filter_tables(left: str):
+        # Filter tables by feature selection
+        def filter_by_feature(left: str):
             if left is None:
                 return
             if "LEFT FEATURE NAME" in self.data_manager.data:
@@ -128,8 +128,25 @@ class Callbacks:
                     feature_name=left
                 )
         pn.bind(
-            filter_tables,
+            filter_by_feature,
             self.widgets.left_feature_selector,
+            watch=True
+        )
+    
+        # Filter metrics table by selected metric
+        def filter_by_metric(metric: str):
+            if metric is None:
+                return
+            if "LEFT FEATURE NAME" in self.data_manager.data:
+                self.layout.update_metrics_table(
+                    self.data_manager.data,
+                    self.widgets.build_table,
+                    left_feature_name=self.widgets.left_feature_selector.value,
+                    metric_name=metric
+                )
+        pn.bind(
+            filter_by_metric,
+            self.widgets.selected_metric,
             watch=True
         )
     
