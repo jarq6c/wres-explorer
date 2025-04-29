@@ -26,6 +26,8 @@ class Widgets:
         Select widget for selecting metrics.
     metrics_pane: pn.pane.Plotly
         Pane for displaying metrics plots.
+    pairs_pane: pn.pane.Plotly
+        Pane for displaying pairs plots.
     
     Methods
     -------
@@ -64,6 +66,7 @@ class Widgets:
             options=[]
         )
         self.metrics_pane = pn.pane.Plotly()
+        self.pairs_pane = pn.pane.Plotly()
     
     @staticmethod
     def build_table(data: pd.DataFrame) -> pn.widgets.Tabulator:

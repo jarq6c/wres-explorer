@@ -75,6 +75,10 @@ class Layout:
             )
         )
         self.add_tab(
+            "Pairs Plots",
+            self.widgets.pairs_pane
+        )
+        self.add_tab(
             "Metrics Table",
             self.widgets.build_table(
                 pd.DataFrame({"message": ["no data loaded"]})
