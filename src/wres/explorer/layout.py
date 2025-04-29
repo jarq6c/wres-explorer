@@ -55,7 +55,7 @@ class Layout:
             )
         self.add_tab(
             "Metrics Table",
-            self.widgets.build_metrics_table(
+            self.widgets.build_table(
                 pd.DataFrame({"message": ["no data loaded"]})
         ))
         self.add_tab(
@@ -79,6 +79,11 @@ class Layout:
                 self.widgets.metrics_pane
             )
         )
+        self.add_tab(
+            "Pairs Table",
+            self.widgets.build_table(
+                pd.DataFrame({"message": ["no data loaded"]})
+        ))
         self.template = BootstrapTemplate(title=title)
         self.template.main.append(self.tabs)
     
@@ -115,5 +120,22 @@ class Layout:
         """
         self.tabs[1] = (
             "Metrics Table",
+            table_builder(data)
+            )
+
+    def update_pairs_table(
+            self,
+            data: pd.DataFrame,
+            table_builder: TableBuilder) -> None:
+        """
+        Update pairs table with new data.
+        
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Data to display in the pairs table.
+        """
+        self.tabs[4] = (
+            "Pairs Table",
             table_builder(data)
             )

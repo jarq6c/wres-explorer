@@ -35,7 +35,11 @@ class Callbacks:
             self.data_manager.load_data(self.widgets.file_selector.value)
             self.layout.update_metrics_table(
                 self.data_manager.data,
-                self.widgets.build_metrics_table
+                self.widgets.build_table
+            )
+            self.layout.update_pairs_table(
+                self.data_manager.pairs,
+                self.widgets.build_table
             )
             self.widgets.map_selector.object = generate_map(
                 self.data_manager.feature_mapping

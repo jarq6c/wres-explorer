@@ -66,14 +66,14 @@ class Widgets:
         self.metrics_pane = pn.pane.Plotly()
     
     @staticmethod
-    def build_metrics_table(data: pd.DataFrame) -> pn.widgets.Tabulator:
+    def build_table(data: pd.DataFrame) -> pn.widgets.Tabulator:
         """
-        Build a metrics table with the provided data.
+        Build a table with the provided data.
         
         Parameters
         ----------
         data: pd.DataFrame
-            Data to display in the metrics table.
+            Data to display in the table.
         """
         return pn.widgets.Tabulator(
             data,
