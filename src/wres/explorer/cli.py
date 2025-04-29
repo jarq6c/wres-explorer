@@ -435,7 +435,7 @@ class Dashboard:
         """
         Serve the dashboard.
         """
-        return self.layout.template.servable()
+        return self.layout.servable()
 
 @click.command()
 def run() -> None:
