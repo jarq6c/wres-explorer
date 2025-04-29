@@ -2,6 +2,7 @@
 import pandas as pd
 import geopandas as gpd
 import plotly.graph_objects as go
+import colorcet as cc
 
 def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
     """
@@ -24,7 +25,7 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
         name="",
         lat=geodata["geometry"].y,
         lon=geodata["geometry"].x,
-        mode='markers',
+        mode="markers",
         marker=dict(
             size=15,
             color="cyan"
@@ -176,39 +177,48 @@ def generate_pairs_plot(
         "REFERENCE TIME",
         "VALID TIME",
         "PREDICTED IN ft3/s"
-    ]].drop_duplicates()
+    ]].drop_duplicates().sort_values(by=["REFERENCE TIME", "VALID TIME"])
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=obs["VALID TIME"],
-        y=obs["OBSERVED IN ft3/s"],
-        mode='markers',
-        name='Observed',
-        hovertemplate=
-        "VALID TIME: %{x}<br>"
-        "OBSERVED: %{y}<br>",
-        legendgroup="observed"
-    ))
-
-    for rt, p in pred.groupby("REFERENCE TIME"):
-        fig.add_trace(go.Scatter(
-            x=p["VALID TIME"],
-            y=p["PREDICTED IN ft3/s"],
-            mode='markers',
-            name=str(rt),
-            hovertemplate=
-            "VALID TIME: %{x}<br>"
-            "PREDICTED: %{y}<br>",
-            legendgroup="predicted",
-            legendgrouptitle_text="Predicted"
-        ))
 
     fig.update_xaxes(title="VALID TIME")
     fig.update_yaxes(title="STREAMFLOW (ft³/s)")
     fig.update_layout(
         height=720,
         width=1280,
-        margin=dict(l=0, r=0, t=0, b=0),
+        margin=dict(l=0, r=0, t=0, b=0)
     )
+
+    fig.add_trace(go.Scatter(
+        x=obs["VALID TIME"],
+        y=obs["OBSERVED IN ft3/s"],
+        mode="markers",
+        name="Observed",
+        marker=dict(color="cyan", line=dict(color="black", width=1)),
+        hovertemplate=
+        "VALID TIME: %{x}<br>"
+        "OBSERVED: %{y}<br>",
+        legendgroup="observed"
+    ))
+
+    idx = 0
+    for rt, p in pred.groupby("REFERENCE TIME"):
+        time_str = rt.strftime("%Y-%m-%d %H")
+        fig.add_trace(go.Scatter(
+            x=p["VALID TIME"],
+            y=p["PREDICTED IN ft3/s"],
+            mode="lines",
+            name=time_str,
+            line=dict(color=cc.CET_L8[idx]),
+            hovertemplate=
+            f"REFERENCE TIME: {time_str}<br>"
+            "VALID TIME: %{x}<br>"
+            "PREDICTED: %{y}<br>",
+            legendgroup="predicted",
+            legendgrouptitle_text="Predicted"
+        ))
+        idx += 1
+        if idx == len(cc.CET_L8):
+            idx = 0
     
     return fig
