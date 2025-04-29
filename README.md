@@ -1,5 +1,5 @@
 # WRES Explorer
-Utilities to visualize and explore output from the [NOAA Office of Water Prediction](https://raw.githubusercontent.com/NOAA-OWP)'s (OWP) [Water Resources Evaluation Service](https://raw.githubusercontent.com/NOAA-OWP/wres) (WRES).
+Utilities to visualize and explore output from the [NOAA Office of Water Prediction](https://github.com/NOAA-OWP)'s (OWP) [Water Resources Evaluation Service](https://github.com/NOAA-OWP/wres) (WRES).
 
 ## Installation
 In accordance with the python community, we support and advise the usage of virtual
