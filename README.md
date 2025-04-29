@@ -30,3 +30,11 @@ Usage: wres-explorer [OPTIONS]
 Options:
   --help  Show this message and exit.
 ```
+
+## Application Interface
+
+![File Selector](https://github.com/jarq6c/wres-explorer/blob/main/images/file_selector.JPG)
+![File Selected](https://github.com/jarq6c/wres-explorer/blob/main/images/file_selection.JPG)
+![Data Table](https://github.com/jarq6c/wres-explorer/blob/main/images/data_table.JPG)
+![Map Selector](https://github.com/jarq6c/wres-explorer/blob/main/images/map_selector.JPG)
+![Metric Selector](https://github.com/jarq6c/wres-explorer/blob/main/images/metric_selector.JPG)
