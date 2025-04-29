@@ -54,11 +54,6 @@ class Layout:
             pn.Column(self.widgets.file_selector, self.widgets.load_data_button)
             )
         self.add_tab(
-            "Metrics Table",
-            self.widgets.build_table(
-                pd.DataFrame({"message": ["no data loaded"]})
-        ))
-        self.add_tab(
             "Feature Selector",
             pn.Row(
                 pn.Column(
@@ -79,6 +74,11 @@ class Layout:
                 self.widgets.metrics_pane
             )
         )
+        self.add_tab(
+            "Metrics Table",
+            self.widgets.build_table(
+                pd.DataFrame({"message": ["no data loaded"]})
+        ))
         self.add_tab(
             "Pairs Table",
             self.widgets.build_table(
@@ -125,7 +125,7 @@ class Layout:
         else:
             df = data
 
-        self.tabs[1] = (
+        self.tabs[3] = (
             "Metrics Table",
             table_builder(df)
             )
