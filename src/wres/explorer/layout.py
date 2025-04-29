@@ -129,7 +129,7 @@ class Layout:
         else:
             df = data
 
-        self.tabs[3] = (
+        self.tabs[4] = (
             "Metrics Table",
             table_builder(df)
             )
@@ -153,7 +153,7 @@ class Layout:
         else:
             df = data
 
-        self.tabs[4] = (
+        self.tabs[5] = (
             "Pairs Table",
             table_builder(df)
             )
