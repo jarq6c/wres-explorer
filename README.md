@@ -12,7 +12,7 @@ environment manager should work just fine (`conda`, `pipenv`, etc. ).
 # Create and activate python environment, requires python >= 3.10
 $ python3 -m venv venv
 $ source venv/bin/activate
-$ python3 -m pip install --upgrade pip
+$ python3 -m pip install --upgrade pip wheel
 
 # Install nwis_client
 $ python3 -m pip install wres.explorer
@@ -34,20 +34,28 @@ Options:
 The application features a tabbing interface. The "File Selector" tab is active by default. 
 
 ### File Selector
-The file browser starts in the directory where the application was launched. Use the arrows to move the files you want to visualize from the "File Browser" to the "Selected files".
+The file browser starts in the directory where the application was launched. Use the arrows (`>>` or `<<`) to move the files you want to visualize from the "File Browser" to the "Selected files".
 ![File Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/file_selector.JPG)
 
-The example below has selected the file `ABRFC.evaluation.csv.gz`. After selecting one or more files, click the "Load/Reload Data" button to read the files.
+The example below has selected the files `ABRFC.evaluation.csv.gz` and `ABRFC.pairs.csv.gz`. After selecting one or more files, click the "Load/Reload Data" button to read the files.
 ![File Selected](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/file_selection.JPG)
-
-### Metrics Table
-Once data are loaded, you will be able to explore the file(s) contents through a paging tabular interface shown below.
-![Data Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/data_table.JPG)
 
 ### Feature Selector
 To inspect the metrics at a specific feature (site), you need to select a feature from the selection boxes or by clicking on the map. The available options are determined by the features found in the files you selected earlier. Note the selected site in magenta.
 ![Map Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/map_selector.JPG)
 
 ### Metrics Plots
-After a site is selected, the "Metrics Plots" tab will be populated with plots showing the metrics found at this feature. Use the dropdown menu ("Select Metric") to view different metrics.
-![Metric Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/metric_selector.JPG)
+After a site is selected, the "Metrics Plots" tab will be populated with plots showing the metrics found at this feature. Use the dropdown menu ("Select Metric") to view different metrics. Selecting a site will filter this table to the selected feature.
+![Metrics Plot](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/metric_selector.JPG)
+
+### Pairs Plots
+After a site is selected, the "Pairs Plots" tab will be populated with plots showing the pairs (time series).
+![Pairs Plots](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_plot.JPG)
+
+### Metrics Table
+Once data are loaded, you will be able to explore the metrics file(s) contents through a paging tabular interface shown below. Selecting a site will filter this table to the selected feature.
+![Metrics Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/data_table.JPG)
+
+### Pairs Table
+Once data are loaded, you will be able to explore the pairs file(s) contents through a paging tabular interface shown below. Selecting a site will filter this table to the selected feature.
+![Pairs Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_table.JPG)
