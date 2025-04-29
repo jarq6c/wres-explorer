@@ -3,7 +3,7 @@ import panel as pn
 from .data import DataManager
 from .layout import Layout
 from .widgets import Widgets
-from .plots import generate_map, generate_metrics_plot
+from .plots import generate_map, generate_metrics_plot, generate_pairs_plot
 
 class Callbacks:
     """Class to handle callbacks for the dashboard.
@@ -147,6 +147,19 @@ class Callbacks:
         pn.bind(
             filter_by_metric,
             self.widgets.selected_metric,
+            watch=True
+        )
+        
+        # Link feature selector to pairs pane
+        def update_pairs_plot(event):
+            fig = generate_pairs_plot(
+                self.data_manager.pairs,
+                self.widgets.left_feature_selector.value
+            )
+            self.widgets.pairs_pane.object = fig
+        pn.bind(
+            update_pairs_plot,
+            self.widgets.left_feature_selector,
             watch=True
         )
     

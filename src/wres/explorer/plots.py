@@ -142,3 +142,73 @@ def generate_metrics_plot(
         )
     )
     return fig
+
+def generate_pairs_plot(
+        data: pd.DataFrame,
+        feature_name: str
+    ) -> go.Figure:
+    """
+    Generate a pairs plot.
+
+    Parameters
+    ----------
+    data: pd.DataFrame
+        Data containing pairs information.
+    feature_name: str
+        Name of the feature to filter the data.
+
+    Returns
+    -------
+    go.Figure
+        Plotly figure object containing the pairs plot.
+    """
+    if "FEATURE NAME" not in data:
+        return go.Figure()
+
+    # Subset data for the selected feature and metric
+    df = data[data["FEATURE NAME"] == feature_name]
+
+    # Parse out observations
+    obs = df[["VALID TIME", "OBSERVED IN ft3/s"]].drop_duplicates()
+
+    # Parse out predicted
+    pred = df[[
+        "REFERENCE TIME",
+        "VALID TIME",
+        "PREDICTED IN ft3/s"
+    ]].drop_duplicates()
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=obs["VALID TIME"],
+        y=obs["OBSERVED IN ft3/s"],
+        mode='markers',
+        name='Observed',
+        hovertemplate=
+        "VALID TIME: %{x}<br>"
+        "OBSERVED: %{y}<br>",
+        legendgroup="observed"
+    ))
+
+    for rt, p in pred.groupby("REFERENCE TIME"):
+        fig.add_trace(go.Scatter(
+            x=p["VALID TIME"],
+            y=p["PREDICTED IN ft3/s"],
+            mode='markers',
+            name=str(rt),
+            hovertemplate=
+            "VALID TIME: %{x}<br>"
+            "PREDICTED: %{y}<br>",
+            legendgroup="predicted",
+            legendgrouptitle_text="Predicted"
+        ))
+
+    fig.update_xaxes(title="VALID TIME")
+    fig.update_yaxes(title="STREAMFLOW (ft³/s)")
+    fig.update_layout(
+        height=720,
+        width=1280,
+        margin=dict(l=0, r=0, t=0, b=0),
+    )
+    
+    return fig
