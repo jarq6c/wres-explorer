@@ -1,5 +1,5 @@
 # WRES Explorer
-Utilities to visualize and explore output from the [NOAA Office of Water Prediction](https://github.com/NOAA-OWP)'s (OWP) [Water Resources Evaluation Service](https://github.com/NOAA-OWP/wres) (WRES).
+Utilities to visualize and explore output from the [NOAA Office of Water Prediction](https://raw.githubusercontent.com/NOAA-OWP)'s (OWP) [Water Resources Evaluation Service](https://raw.githubusercontent.com/NOAA-OWP/wres) (WRES).
 
 ## Installation
 In accordance with the python community, we support and advise the usage of virtual
@@ -35,19 +35,19 @@ The application features a tabbing interface. The "File Selector" tab is active 
 
 ### File Selector
 The file browser starts in the directory where the application was launched. Use the arrows to move the files you want to visualize from the "File Browser" to the "Selected files".
-![File Selector](https://github.com/jarq6c/wres-explorer/blob/main/images/file_selector.JPG)
+![File Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/file_selector.JPG)
 
 The example below has selected the file `ABRFC.evaluation.csv.gz`. After selecting one or more files, click the "Load/Reload Data" button to read the files.
-![File Selected](https://github.com/jarq6c/wres-explorer/blob/main/images/file_selection.JPG)
+![File Selected](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/file_selection.JPG)
 
 ### Metrics Table
 Once data are loaded, you will be able to explore the file(s) contents through a paging tabular interface shown below.
-![Data Table](https://github.com/jarq6c/wres-explorer/blob/main/images/data_table.JPG)
+![Data Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/data_table.JPG)
 
 ### Feature Selector
 To inspect the metrics at a specific feature (site), you need to select a feature from the selection boxes or by clicking on the map. The available options are determined by the features found in the files you selected earlier. Note the selected site in magenta.
-![Map Selector](https://github.com/jarq6c/wres-explorer/blob/main/images/map_selector.JPG)
+![Map Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/map_selector.JPG)
 
 ### Metrics Plots
 After a site is selected, the "Metrics Plots" tab will be populated with plots showing the metrics found at this feature. Use the dropdown menu ("Select Metric") to view different metrics.
-![Metric Selector](https://github.com/jarq6c/wres-explorer/blob/main/images/metric_selector.JPG)
+![Metric Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/metric_selector.JPG)
