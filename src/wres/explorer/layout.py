@@ -134,7 +134,7 @@ class Layout:
             self,
             data: pd.DataFrame,
             table_builder: TableBuilder,
-            left_feature_name: str | None = None
+            feature_name: str | None = None
             ) -> None:
         """
         Update pairs table with new data.
@@ -144,8 +144,8 @@ class Layout:
         data: pd.DataFrame
             Data to display in the pairs table.
         """
-        if left_feature_name is not None:
-            df = data[data["LEFT FEATURE NAME"] == left_feature_name]
+        if feature_name is not None:
+            df = data[data["FEATURE NAME"] == feature_name]
         else:
             df = data
 

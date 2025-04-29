@@ -111,6 +111,28 @@ class Callbacks:
             watch=True
         )
     
+        # Filter tables
+        def filter_tables(left: str):
+            if left is None:
+                return
+            if "LEFT FEATURE NAME" in self.data_manager.data:
+                self.layout.update_metrics_table(
+                    self.data_manager.data,
+                    self.widgets.build_table,
+                    left_feature_name=left
+                )
+            if "FEATURE NAME" in self.data_manager.pairs:
+                self.layout.update_pairs_table(
+                    self.data_manager.pairs,
+                    self.widgets.build_table,
+                    feature_name=left
+                )
+        pn.bind(
+            filter_tables,
+            self.widgets.left_feature_selector,
+            watch=True
+        )
+    
     def update_feature_selectors(self) -> None:
         if "LEFT FEATURE NAME" not in self.data_manager.feature_mapping:
             self.widgets.left_feature_selector.options = []
