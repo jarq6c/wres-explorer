@@ -109,7 +109,9 @@ class Layout:
     def update_metrics_table(
             self,
             data: pd.DataFrame,
-            table_builder: TableBuilder) -> None:
+            table_builder: TableBuilder,
+            left_feature_name: str | None = None
+            ) -> None:
         """
         Update metrics table with new data.
         
@@ -118,15 +120,22 @@ class Layout:
         data: pd.DataFrame
             Data to display in the metrics table.
         """
+        if left_feature_name is not None:
+            df = data[data["LEFT FEATURE NAME"] == left_feature_name]
+        else:
+            df = data
+
         self.tabs[1] = (
             "Metrics Table",
-            table_builder(data)
+            table_builder(df)
             )
 
     def update_pairs_table(
             self,
             data: pd.DataFrame,
-            table_builder: TableBuilder) -> None:
+            table_builder: TableBuilder,
+            left_feature_name: str | None = None
+            ) -> None:
         """
         Update pairs table with new data.
         
@@ -135,7 +144,12 @@ class Layout:
         data: pd.DataFrame
             Data to display in the pairs table.
         """
+        if left_feature_name is not None:
+            df = data[data["LEFT FEATURE NAME"] == left_feature_name]
+        else:
+            df = data
+
         self.tabs[4] = (
             "Pairs Table",
-            table_builder(data)
+            table_builder(df)
             )
