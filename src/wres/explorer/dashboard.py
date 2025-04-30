@@ -1,5 +1,6 @@
 """Combine all the components of the dashboard into a single app."""
 import panel as pn
+from panel.template import BootstrapTemplate
 from .data import DataManager
 from .widgets import Widgets
 from .layout import Layout
@@ -31,8 +32,16 @@ class Dashboard:
             widgets=self.widgets
         )
 
-    def serve(self):
+    def serve(self) -> BootstrapTemplate:
         """
         Serve the dashboard.
         """
-        pn.serve(self.layout.servable())
+        return self.layout.servable()
+
+def dashboard_factory() -> Dashboard:
+    """Factory function to create a Dashboard instance."""
+    return Dashboard("WRES CSV Explorer").serve()
+
+def serve_dashboard() -> None:
+    """Serve the dashboard."""
+    pn.serve(dashboard_factory)
