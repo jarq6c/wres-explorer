@@ -14,7 +14,7 @@ $ python3 -m venv venv
 $ source venv/bin/activate
 $ python3 -m pip install --upgrade pip wheel
 
-# Install nwis_client
+# Install wres.explorer
 $ python3 -m pip install wres.explorer
 ```
 
