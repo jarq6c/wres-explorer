@@ -6,6 +6,21 @@ from .layout import Layout
 from .callbacks import Callbacks
 
 class Dashboard:
+    """Dashboard class to combine all components into a single app.
+    
+    Attributes
+    ----------
+    title : str
+        The title of the dashboard.
+    data_manager : DataManager
+        Instance of DataManager to handle data operations.
+    widgets : Widgets
+        Instance of Widgets to manage dashboard widgets.
+    layout : Layout
+        Instance of Layout to manage the dashboard layout.
+    callbacks : Callbacks
+        Instance of Callbacks to handle interactions and updates.
+    """
     def __init__(self, title: str):
         self.data_manager = DataManager()
         self.widgets = Widgets()

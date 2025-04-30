@@ -16,6 +16,8 @@ class Callbacks:
         Instance of Layout to manage the layout of the dashboard.
     widgets : Widgets
         Instance of Widgets to manage the widgets in the dashboard.
+    feature_descriptions : list
+        List of feature descriptions for the left feature selector.
     """
     def __init__(
             self,
@@ -147,6 +149,7 @@ class Callbacks:
         )
     
     def update_feature_selectors(self) -> None:
+        """Update the feature selector options based on loaded data."""
         if "LEFT FEATURE NAME" not in self.data_manager.feature_mapping:
             self.widgets.left_feature_selector.options = []
             self.widgets.right_feature_selector.options = []
@@ -169,6 +172,7 @@ class Callbacks:
                 "LEFT FEATURE DESCRIPTION"].tolist())
     
     def update_metric_selector(self) -> None:
+        """Update the metric selector options based on loaded data."""
         if "METRIC NAME" not in self.data_manager.data:
             self.widgets.selected_metric.options = []
             return

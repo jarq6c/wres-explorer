@@ -1,4 +1,4 @@
-"""Methods to load and process WRES output."""
+"""Methods to load and process WRES CSV2 output."""
 from typing import Type, Iterable
 import pandas as pd
 import geopandas as gpd
@@ -232,6 +232,14 @@ class DataManager:
         self.feature_mapping: pd.DataFrame = None
     
     def load_data(self, filepaths: list[str]):
+        """
+        Load data from the provided filepaths.
+
+        Parameters
+        ----------
+        filepaths: list[str], required
+            Paths to CSV files containing metrics and pairs data.
+        """
         if len(filepaths) == 0:
             self.data = pd.DataFrame({"message": ["no data loaded"]})
             self.feature_mapping = pd.DataFrame(
