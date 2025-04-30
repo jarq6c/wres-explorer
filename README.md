@@ -22,7 +22,7 @@ $ python3 -m pip install wres.explorer
 ```console
 Usage: wres-explorer [OPTIONS]
 
-  Visualize and explore metrics output from WRES CSV2 formatted output.
+  Visualize and explore output from WRES CSV2 formatted files.
 
   Run "wres-explorer" from the command-line, ctrl+c to stop the server.:
 
@@ -45,11 +45,11 @@ To inspect the metrics at a specific feature (site), you need to select a featur
 ![Map Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/map_selector.JPG)
 
 ### Metrics Plots
-After a site is selected, the "Metrics Plots" tab will be populated with plots showing the metrics found at this feature. Use the dropdown menu ("Select Metric") to view different metrics. Selecting a site will filter this table to the selected feature.
+After a site is selected, the "Metrics Plots" tab will be populated with plots showing the metrics found at this feature. Use the dropdown menu ("Select Metric") to view different metrics.
 ![Metrics Plot](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/metric_selector.JPG)
 
 ### Pairs Plots
-After a site is selected, the "Pairs Plots" tab will be populated with plots showing the pairs (time series).
+After a site is selected, the "Pairs Plots" tab will be populated with plots showing the pairs (time series) for the selected feature.
 ![Pairs Plots](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_plot.JPG)
 
 ### Metrics Table
@@ -57,5 +57,5 @@ Once data are loaded, you will be able to explore the metrics file(s) contents t
 ![Metrics Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/data_table.JPG)
 
 ### Pairs Table
-Once data are loaded, you will be able to explore the pairs file(s) contents through a paging tabular interface shown below. Selecting a site will filter this table to the selected feature.
+You can also explore the pairs file(s) contents through a paging tabular interface. As with the Metrics Table, selecting a site will filter this table to the selected feature.
 ![Pairs Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_table.JPG)
