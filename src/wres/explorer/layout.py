@@ -114,8 +114,7 @@ class Layout:
             self,
             data: pd.DataFrame,
             table_builder: TableBuilder,
-            left_feature_name: str | None = None,
-            metric_name: str | None = None
+            left_feature_name: str | None = None
             ) -> None:
         """
         Update metrics table with new data.
@@ -124,12 +123,14 @@ class Layout:
         ----------
         data: pd.DataFrame
             Data to display in the metrics table.
+        table_builder: TableBuilder
+            Function to build the metrics table.
+        left_feature_name: str | None
+            Name of the left feature to filter the data by.
         """
-        df = data
+        df = data.copy()
         if left_feature_name is not None:
             df = df[df["LEFT FEATURE NAME"] == left_feature_name]
-        if metric_name is not None:
-            df = df[df["METRIC NAME"] == metric_name]
 
         self.tabs[4] = (
             "Metrics Table",
@@ -149,11 +150,15 @@ class Layout:
         ----------
         data: pd.DataFrame
             Data to display in the pairs table.
+        table_builder: TableBuilder
+            Function to build the pairs table.
+        feature_name: str | None
+            Name of the feature to filter the data by.
         """
         if feature_name is not None:
             df = data[data["FEATURE NAME"] == feature_name]
         else:
-            df = data
+            df = data.copy()
 
         self.tabs[5] = (
             "Pairs Table",

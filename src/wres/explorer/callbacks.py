@@ -132,23 +132,6 @@ class Callbacks:
             self.widgets.left_feature_selector,
             watch=True
         )
-    
-        # Filter metrics table by selected metric
-        def filter_by_metric(metric: str):
-            if metric is None:
-                return
-            if "LEFT FEATURE NAME" in self.data_manager.data:
-                self.layout.update_metrics_table(
-                    self.data_manager.data,
-                    self.widgets.build_table,
-                    left_feature_name=self.widgets.left_feature_selector.value,
-                    metric_name=metric
-                )
-        pn.bind(
-            filter_by_metric,
-            self.widgets.selected_metric,
-            watch=True
-        )
         
         # Link feature selector to pairs pane
         def update_pairs_plot(event):
