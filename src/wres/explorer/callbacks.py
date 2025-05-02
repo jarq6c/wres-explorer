@@ -55,6 +55,10 @@ class Callbacks:
             if not right_value:
                 return
             idx = self.widgets.right_feature_selector.options.index(right_value)
+            feature = self.data_manager.feature_mapping.iloc[idx]
+            scatter = self.widgets.map_selector.object.data[0]
+            scatter.lon = [feature["geometry"].x]
+            scatter.lat = [feature["geometry"].y]
             self.widgets.left_feature_selector.value = (
                 self.widgets.left_feature_selector.options[idx]
                 )
@@ -62,10 +66,6 @@ class Callbacks:
                     "LEFT FEATURE DESCRIPTION<br>" +
                     self.feature_descriptions[idx]
                 )
-            feature = self.data_manager.feature_mapping.iloc[idx]
-            scatter = self.widgets.map_selector.object.data[0]
-            scatter.lon = [feature["geometry"].x]
-            scatter.lat = [feature["geometry"].y]
         def update_right(left_value):
             if not left_value:
                 return
