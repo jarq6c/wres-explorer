@@ -78,6 +78,9 @@ class Callbacks:
                 return
             try:
                 point = event["points"][0]
+                scatter = self.widgets.map_selector.object.data[0]
+                scatter.lon = [point["lon"]]
+                scatter.lat = [point["lat"]]
                 self.widgets.left_feature_selector.value = point["customdata"][0]
                 self.widgets.right_feature_selector.value = point["customdata"][2]
                 self.widgets.description_pane.object = (

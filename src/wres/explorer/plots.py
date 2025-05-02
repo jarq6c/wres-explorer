@@ -19,8 +19,27 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
     if "geometry" not in geodata:
         return go.Figure()
     
-    # Build map
-    fig = go.Figure(go.Scattermap(
+    # Build figure
+    fig = go.Figure()
+    fig.add_trace(go.Scattermap(
+        showlegend=False,
+        name="",
+        lat=[geodata["geometry"].y[0]],
+        lon=[geodata["geometry"].x[0]],
+        mode="markers",
+        marker=dict(
+            size=25,
+            color="magenta"
+            ),
+        selected=dict(
+            marker=dict(
+                color="magenta"
+            )
+        ),
+    ))
+
+    # Add Map
+    fig.add_trace(go.Scattermap(
         showlegend=False,
         name="",
         lat=geodata["geometry"].y,
@@ -32,7 +51,7 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
             ),
         selected=dict(
             marker=dict(
-                color="magenta"
+                color="cyan"
             )
         ),
         customdata=geodata[[
@@ -47,6 +66,8 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
         "LONGITUDE: %{lon}<br>"
         "LATITUDE: %{lat}<br>"
     ))
+
+    # Layout configuration
     fig.update_layout(
         showlegend=False,
         height=720,
@@ -186,7 +207,8 @@ def generate_pairs_plot(
     fig.update_layout(
         height=720,
         width=1280,
-        margin=dict(l=0, r=0, t=0, b=0)
+        margin=dict(l=0, r=0, t=0, b=0),
+        clickmode="select",
     )
 
     fig.add_trace(go.Scatter(
