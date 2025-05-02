@@ -62,6 +62,10 @@ class Callbacks:
                     "LEFT FEATURE DESCRIPTION<br>" +
                     self.feature_descriptions[idx]
                 )
+            feature = self.data_manager.feature_mapping.iloc[idx]
+            scatter = self.widgets.map_selector.object.data[0]
+            scatter.lon = [feature["geometry"].x]
+            scatter.lat = [feature["geometry"].y]
         def update_right(left_value):
             if not left_value:
                 return
@@ -78,9 +82,6 @@ class Callbacks:
                 return
             try:
                 point = event["points"][0]
-                scatter = self.widgets.map_selector.object.data[0]
-                scatter.lon = [point["lon"]]
-                scatter.lat = [point["lat"]]
                 self.widgets.left_feature_selector.value = point["customdata"][0]
                 self.widgets.right_feature_selector.value = point["customdata"][2]
                 self.widgets.description_pane.object = (
