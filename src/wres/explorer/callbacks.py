@@ -30,6 +30,18 @@ class Callbacks:
         self.widgets = widgets
         self.feature_descriptions = []
 
+        # Navigation
+        def navigate_forward(event):
+            if self.layout.tabs.active == (len(self.layout.tabs)-1):
+                return
+            self.layout.tabs.active += 1
+        pn.bind(navigate_forward, self.widgets.next_tab_button, watch=True)
+        def navigate_back(event):
+            if self.layout.tabs.active == 0:
+                return
+            self.layout.tabs.active -= 1
+        pn.bind(navigate_back, self.widgets.back_tab_button, watch=True)
+
         # Callback for loading data
         def load_data(event):
             if not event:
