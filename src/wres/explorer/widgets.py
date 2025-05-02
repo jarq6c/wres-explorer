@@ -67,6 +67,17 @@ class Widgets:
         )
         self.metrics_pane = pn.pane.Plotly()
         self.pairs_pane = pn.pane.Plotly()
+        self.next_tab_button = pn.widgets.Button(
+            name="Next",
+            button_type="primary",
+            align="end",
+            width=200
+        )
+        self.back_tab_button = pn.widgets.Button(
+            name="Back",
+            button_type="primary",
+            width=200
+        )
     
     @staticmethod
     def build_table(data: pd.DataFrame) -> pn.widgets.Tabulator:

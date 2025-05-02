@@ -48,10 +48,18 @@ class Layout:
             Instance of Widgets to create the layout.
         """
         self.widgets = widgets
+        self.navigation_buttons = pn.Row(
+            self.widgets.back_tab_button,
+            self.widgets.next_tab_button,
+            align="end"
+        )
         self.tabs = pn.Tabs()
         self.add_tab(
             "File Selector",
-            pn.Column(self.widgets.file_selector, self.widgets.load_data_button)
+            pn.Column(
+                self.widgets.file_selector,
+                self.widgets.load_data_button
+                )
             )
         self.add_tab(
             "Feature Selector",
@@ -89,7 +97,10 @@ class Layout:
                 pd.DataFrame({"message": ["no data loaded"]})
         ))
         self.template = BootstrapTemplate(title=title)
-        self.template.main.append(self.tabs)
+        self.template.main.append(pn.Column(
+            self.tabs,
+            self.navigation_buttons
+        ))
     
     def add_tab(self, name: str, content: pn.pane) -> None:
         """
