@@ -96,6 +96,13 @@ class Layout:
             self.widgets.build_table(
                 pd.DataFrame({"message": ["no data loaded"]})
         ))
+        self.add_tab(
+            "Image Selector",
+            pn.Column(
+                self.widgets.image_selector,
+                self.widgets.load_images_button
+                )
+            )
         self.template = BootstrapTemplate(title=title)
         self.template.main.append(pn.Column(
             self.tabs,

@@ -79,6 +79,16 @@ class Widgets:
             button_style="outline",
             width=200
         )
+        self.image_selector = pn.widgets.FileSelector(
+            directory="./",
+            file_pattern="*.PNG;*.png;*.jpg;*.jpeg;*.JPG;*.JPEG",
+            only_files=False,
+            value=[]
+        )
+        self.load_images_button = pn.widgets.Button(
+            name="Load/Reload Images",
+            button_type="primary"
+        )
     
     @staticmethod
     def build_table(data: pd.DataFrame) -> pn.widgets.Tabulator:
