@@ -35,24 +35,27 @@ class Callbacks:
         self.curve_color: str | None = None
 
         # Navigation
+        def update_button_style(active_tab):
+            if active_tab == 0:
+                self.widgets.next_tab_button.button_style = "solid"
+                self.widgets.back_tab_button.button_style = "outline"
+            elif active_tab == (len(self.layout.tabs)-1):
+                self.widgets.next_tab_button.button_style = "outline"
+                self.widgets.back_tab_button.button_style = "solid"
+            else:
+                self.widgets.next_tab_button.button_style = "solid"
+                self.widgets.back_tab_button.button_style = "solid"
         def navigate_forward(event):
             if self.layout.tabs.active == (len(self.layout.tabs)-1):
                 return
-            if layout.tabs.active == 0:
-                self.widgets.back_tab_button.button_style = "solid"
-            if layout.tabs.active == (len(self.layout.tabs)-2):
-                self.widgets.next_tab_button.button_style = "outline"
             self.layout.tabs.active += 1
         pn.bind(navigate_forward, self.widgets.next_tab_button, watch=True)
         def navigate_back(event):
             if self.layout.tabs.active == 0:
                 return
-            if layout.tabs.active == 1:
-                self.widgets.back_tab_button.button_style = "outline"
-            if layout.tabs.active == (len(self.layout.tabs)-1):
-                self.widgets.next_tab_button.button_style = "solid"
             self.layout.tabs.active -= 1
         pn.bind(navigate_back, self.widgets.back_tab_button, watch=True)
+        pn.bind(update_button_style, self.layout.tabs.param.active, watch=True)
 
         # Callback for loading data
         def load_data(event):
