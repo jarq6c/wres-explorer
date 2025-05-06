@@ -2,7 +2,24 @@
 import pandas as pd
 import geopandas as gpd
 import plotly.graph_objects as go
+from plotly.colors import hex_to_rgb, unlabel_rgb, label_rgb
 import colorcet as cc
+
+def invert_color(value: str) -> str:
+    """Convert a hex color to an inverted rgb label.
+    
+    Parameters
+    ----------
+    value: str, required,
+        Hex color string.
+    
+    Returns
+    -------
+    str:
+        Inverted rgb color.
+    """
+    r, g, b = hex_to_rgb(value)
+    return label_rgb((255-r, 255-g, 255-b))
 
 def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
     """
@@ -208,7 +225,7 @@ def generate_pairs_plot(
         height=720,
         width=1280,
         margin=dict(l=0, r=0, t=0, b=0),
-        clickmode="select",
+        clickmode="select+event"
     )
 
     fig.add_trace(go.Scatter(
@@ -231,7 +248,7 @@ def generate_pairs_plot(
             y=p["PREDICTED IN ft3/s"],
             mode="lines",
             name=time_str,
-            line=dict(color=cc.CET_L8[idx]),
+            line=dict(color=cc.CET_L8[idx], width=1),
             hovertemplate=
             f"REFERENCE TIME: {time_str}<br>"
             "VALID TIME: %{x}<br>"

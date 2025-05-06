@@ -4,6 +4,7 @@ from .data import DataManager
 from .layout import Layout
 from .widgets import Widgets
 from .plots import generate_map, generate_metrics_plot, generate_pairs_plot
+from .plots import invert_color
 
 class Callbacks:
     """Class to handle callbacks for the dashboard.
@@ -29,6 +30,9 @@ class Callbacks:
         self.layout = layout
         self.widgets = widgets
         self.feature_descriptions = []
+        self.curve_number: int | None = None
+        self.curve_width: int | None = None
+        self.curve_color: str | None = None
 
         # Navigation
         def navigate_forward(event):
@@ -166,11 +170,26 @@ class Callbacks:
                 self.widgets.left_feature_selector.value
             )
             self.widgets.pairs_pane.object = fig
+        def highlight_pairs(event):
+            if not event:
+                return
+            if self.curve_number is not None:
+                trace = self.widgets.pairs_pane.object.data[self.curve_number]
+                trace["line"]["color"] = self.curve_color
+                trace["line"]["width"] = self.curve_width
+            self.curve_number = event["points"][0]["curveNumber"]
+            trace = self.widgets.pairs_pane.object.data[self.curve_number]
+            self.curve_color = trace["line"]["color"]
+            self.curve_width = trace["line"]["width"]
+            trace["line"]["color"] = invert_color(self.curve_color)
+            trace["line"]["width"] = self.curve_width + 4
         pn.bind(
             update_pairs_plot,
             self.widgets.left_feature_selector,
             watch=True
         )
+        pn.bind(highlight_pairs,
+                self.widgets.pairs_pane.param.click_data, watch=True)
     
     def update_feature_selectors(self) -> None:
         """Update the feature selector options based on loaded data."""
