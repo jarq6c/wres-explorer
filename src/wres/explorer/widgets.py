@@ -76,6 +76,7 @@ class Widgets:
         self.back_tab_button = pn.widgets.Button(
             name="Back",
             button_type="primary",
+            button_style="outline",
             width=200
         )
     
