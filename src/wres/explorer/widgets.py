@@ -81,7 +81,6 @@ class Widgets:
         )
         self.image_selector = pn.widgets.FileSelector(
             directory="./",
-            file_pattern="*.PNG;*.png;*.jpg;*.jpeg;*.JPG;*.JPEG",
             only_files=False,
             value=[]
         )
