@@ -81,12 +81,20 @@ class Widgets:
         )
         self.image_selector = pn.widgets.FileSelector(
             directory="./",
-            only_files=False,
+            only_files=True,
             value=[]
         )
         self.load_images_button = pn.widgets.Button(
             name="Load/Reload Images",
             button_type="primary"
+        )
+        self.image_player = pn.widgets.DiscretePlayer(
+            name="Image",
+            show_value=True,
+            options=["None"],
+            value="None",
+            loop_policy="loop",
+            value_align="start"
         )
     
     @staticmethod

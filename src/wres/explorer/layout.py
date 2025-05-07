@@ -53,11 +53,11 @@ class Layout:
             self.widgets.next_tab_button,
             align="end"
         )
-        self.thumbnail_viewer = pn.FlexBox(
-            align_items="center",
-            align_content="center",
-            gap="10px",
-            justify_content="left")
+        self.image_display = pn.Card()
+        self.image_viewer = pn.Column(
+            self.image_display,
+            self.widgets.image_player
+        )
         self.tabs = pn.Tabs()
         self.add_tab(
             "CSV Selector",
@@ -110,7 +110,7 @@ class Layout:
             )
         self.add_tab(
             "Image Viewer",
-            self.thumbnail_viewer
+            self.image_viewer
             )
         self.template = BootstrapTemplate(title=title)
         self.template.main.append(pn.Column(
@@ -191,3 +191,11 @@ class Layout:
             "Pairs Table",
             table_builder(df)
             )
+
+    def update_images(self, filenames) -> None:
+        filenames = list(filenames)
+        self.widgets.image_player.options = filenames
+        self.widgets.image_player.value = filenames[0]
+
+    def update_image_card(self, image) -> None:
+        self.image_display.objects = [pn.pane.Image(image)]

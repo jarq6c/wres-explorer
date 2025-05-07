@@ -206,19 +206,15 @@ class Callbacks:
             if not event:
                 return
             self.image_manager.set_filepaths(self.widgets.image_selector.value)
-            self.layout.thumbnail_viewer.clear()
-            for fp, tn in self.image_manager.thumbnails.items():
-                self.layout.thumbnail_viewer.append(
-                    pn.Card(
-                        pn.pane.Image(tn),
-                        title=fp.rsplit("/", maxsplit=1)[-1],
-                        collapsible=False,
-                        height=300,
-                        width=300,
-                        sizing_mode="fixed"
-                    )
-                )
+            self.layout.update_images(self.image_manager.images.keys())
         pn.bind(load_images, self.widgets.load_images_button, watch=True)
+        def update_image(event):
+            if not event:
+                return
+            print(event)
+            image = self.image_manager.images[event]
+            self.layout.update_image_card(image)
+        pn.bind(update_image, self.widgets.image_player, watch=True)
     
     def update_feature_selectors(self) -> None:
         """Update the feature selector options based on loaded data."""

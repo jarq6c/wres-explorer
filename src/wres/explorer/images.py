@@ -32,15 +32,14 @@ def generate_thumbnails(
 class ImageManager:
     def __init__(self):
         self.filepaths: list[str] = None
-        self.thumbnails: dict[str, Image.Image] = None
-        self.thumbnail_size = (250, 250)
+        self.images: dict[str, Image.Image] = None
     
     def set_filepaths(
             self,
             filepaths: Iterable[str]
         ) -> None:
         self.filepaths = list(filepaths)
-        self.thumbnails = generate_thumbnails(
-            self.filepaths,
-            self.thumbnail_size
-            )
+        self.images = {}
+        for f in self.filepaths:
+            key = f.rsplit("/", maxsplit=1)[-1]
+            self.images[key] = Image.open(f)
