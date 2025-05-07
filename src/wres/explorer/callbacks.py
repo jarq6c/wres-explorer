@@ -176,12 +176,16 @@ class Callbacks:
         def highlight_pairs(event):
             if not event:
                 return
+            if event["points"][0]["curveNumber"] == self.curve_number:
+                  return
             if self.curve_number is not None:
                 trace = self.widgets.pairs_pane.object.data[self.curve_number]
                 trace["line"]["color"] = self.curve_color
                 trace["line"]["width"] = self.curve_width
             self.curve_number = event["points"][0]["curveNumber"]
             trace = self.widgets.pairs_pane.object.data[self.curve_number]
+            if "lines" not in trace["mode"]:
+                return
             self.curve_color = trace["line"]["color"]
             self.curve_width = trace["line"]["width"]
             trace["line"]["color"] = invert_color(self.curve_color)

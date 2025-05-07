@@ -2,7 +2,7 @@
 import pandas as pd
 import geopandas as gpd
 import plotly.graph_objects as go
-from plotly.colors import hex_to_rgb, unlabel_rgb, label_rgb
+from plotly.colors import hex_to_rgb, label_rgb
 import colorcet as cc
 
 def invert_color(value: str) -> str:
@@ -89,7 +89,7 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
         showlegend=False,
         height=720,
         width=1280,
-        margin=dict(l=0, r=0, t=0, b=0),
+        margin=dict(l=0, r=0, t=50, b=0),
         map=dict(
             style="satellite-streets",
             center={
@@ -98,7 +98,7 @@ def generate_map(geodata: gpd.GeoDataFrame) -> go.Figure:
                 },
             zoom=2
         ),
-        clickmode="event+select",
+        clickmode="event",
         modebar=dict(
             remove=["lasso", "select"]
         ),
@@ -173,7 +173,7 @@ def generate_metrics_plot(
     fig.update_layout(
         height=720,
         width=1280,
-        margin=dict(l=0, r=0, t=0, b=0),
+        margin=dict(l=0, r=0, t=50, b=0),
         xaxis=dict(
             tickmode="array",
             tickvals=sorted(xmin),
@@ -224,8 +224,8 @@ def generate_pairs_plot(
     fig.update_layout(
         height=720,
         width=1280,
-        margin=dict(l=0, r=0, t=0, b=0),
-        clickmode="select+event"
+        margin=dict(l=0, r=0, t=50, b=0),
+        clickmode="event"
     )
 
     fig.add_trace(go.Scatter(
