@@ -40,7 +40,7 @@ class Dashboard:
 
 def dashboard_factory() -> Dashboard:
     """Factory function to create a Dashboard instance."""
-    return Dashboard("WRES CSV Explorer").serve()
+    return Dashboard("WRES Explorer").serve()
 
 def serve_dashboard() -> None:
     """Serve the dashboard."""
