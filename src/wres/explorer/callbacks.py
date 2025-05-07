@@ -184,12 +184,18 @@ class Callbacks:
             if not event:
                 return
             self.image_manager.set_filepaths(self.widgets.image_selector.value)
+            if not self.image_manager.filepaths:
+                self.layout.update_images([])
+                self.layout.clear_image_card()
+                return
             self.layout.update_images(self.image_manager.images.keys())
         pn.bind(load_images, self.widgets.load_images_button, watch=True)
         def update_image(event):
             if not event:
                 return
-            print(event)
+            if event not in self.image_manager.images:
+                self.layout.clear_image_card()
+                return
             image = self.image_manager.images[event]
             self.layout.update_image_card(image)
         pn.bind(update_image, self.widgets.image_player, watch=True)

@@ -194,8 +194,15 @@ class Layout:
 
     def update_images(self, filenames) -> None:
         filenames = list(filenames)
+        if len(filenames) == 0:
+            self.widgets.image_player.options = ["None"]
+            self.widgets.image_player.value = "None"
+            return
         self.widgets.image_player.options = filenames
         self.widgets.image_player.value = filenames[0]
 
     def update_image_card(self, image) -> None:
         self.image_display.objects = [pn.pane.Image(image)]
+    
+    def clear_image_card(self) -> None:
+        self.image_display.clear()
