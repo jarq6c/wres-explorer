@@ -28,3 +28,19 @@ def generate_thumbnails(
         thumbnails[f] = Image.open(f)
         thumbnails[f].thumbnail(max_size)
     return thumbnails
+
+class ImageManager:
+    def __init__(self):
+        self.filepaths: list[str] = None
+        self.thumbnails: dict[str, Image.Image] = None
+        self.thumbnail_size = (250, 250)
+    
+    def set_filepaths(
+            self,
+            filepaths: Iterable[str]
+        ) -> None:
+        self.filepaths = list(filepaths)
+        self.thumbnails = generate_thumbnails(
+            self.filepaths,
+            self.thumbnail_size
+            )

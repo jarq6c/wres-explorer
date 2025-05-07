@@ -5,6 +5,7 @@ from .data import DataManager
 from .widgets import Widgets
 from .layout import Layout
 from .callbacks import Callbacks
+from .images import ImageManager
 
 class Dashboard:
     """Dashboard class to combine all components into a single app.
@@ -26,10 +27,12 @@ class Dashboard:
         self.data_manager = DataManager()
         self.widgets = Widgets()
         self.layout = Layout(title, self.widgets)
+        self.image_manager = ImageManager()
         self.callbacks = Callbacks(
             data_manager=self.data_manager,
             layout=self.layout,
-            widgets=self.widgets
+            widgets=self.widgets,
+            image_manager=self.image_manager
         )
 
     def serve(self) -> BootstrapTemplate:

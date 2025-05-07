@@ -53,6 +53,11 @@ class Layout:
             self.widgets.next_tab_button,
             align="end"
         )
+        self.thumbnail_viewer = pn.FlexBox(
+            align_items="center",
+            align_content="center",
+            gap="10px",
+            justify_content="left")
         self.tabs = pn.Tabs()
         self.add_tab(
             "CSV Selector",
@@ -105,7 +110,7 @@ class Layout:
             )
         self.add_tab(
             "Image Viewer",
-            pn.FlexBox()
+            self.thumbnail_viewer
             )
         self.template = BootstrapTemplate(title=title)
         self.template.main.append(pn.Column(

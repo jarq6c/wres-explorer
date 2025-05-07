@@ -5,6 +5,7 @@ from .layout import Layout
 from .widgets import Widgets
 from .plots import generate_map, generate_metrics_plot, generate_pairs_plot
 from .plots import invert_color
+from .images import ImageManager
 
 class Callbacks:
     """Class to handle callbacks for the dashboard.
@@ -24,11 +25,13 @@ class Callbacks:
             self,
             data_manager: DataManager,
             layout: Layout,
-            widgets: Widgets
+            widgets: Widgets,
+            image_manager: ImageManager
         ) -> None:
         self.data_manager = data_manager
         self.layout = layout
         self.widgets = widgets
+        self.image_manager = image_manager
         self.feature_descriptions = []
         self.curve_number: int | None = None
         self.curve_width: int | None = None
@@ -197,6 +200,25 @@ class Callbacks:
         )
         pn.bind(highlight_pairs,
                 self.widgets.pairs_pane.param.click_data, watch=True)
+        
+        # Callback for loading images
+        def load_images(event):
+            if not event:
+                return
+            self.image_manager.set_filepaths(self.widgets.image_selector.value)
+            self.layout.thumbnail_viewer.clear()
+            for fp, tn in self.image_manager.thumbnails.items():
+                self.layout.thumbnail_viewer.append(
+                    pn.Card(
+                        pn.pane.Image(tn),
+                        title=fp.rsplit("/", maxsplit=1)[-1],
+                        collapsible=False,
+                        height=300,
+                        width=300,
+                        sizing_mode="fixed"
+                    )
+                )
+        pn.bind(load_images, self.widgets.load_images_button, watch=True)
     
     def update_feature_selectors(self) -> None:
         """Update the feature selector options based on loaded data."""
