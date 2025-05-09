@@ -59,3 +59,4 @@ Once data are loaded, you will be able to explore the metrics file(s) contents t
 ### Pairs Table
 You can also explore the pairs file(s) contents through a paging tabular interface. As with the Metrics Table, selecting a site will filter this table to the selected feature.
 ![Pairs Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_table.JPG)
+
