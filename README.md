@@ -53,17 +53,17 @@ After a site is selected, the "Pairs Plots" tab will be populated with plots sho
 ![Pairs Plots](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_plot.JPG)
 
 ### Metrics Table
-Once data are loaded, you will be able to explore the metrics file(s) contents through a paging tabular interface shown below. Selecting a site will filter this table to the selected feature.
+Once data are loaded, you will be able to explore the metrics file(s) contents through a paging tabular interface shown below.
 ![Metrics Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/data_table.JPG)
 
 ### Pairs Table
-You can also explore the pairs file(s) contents through a paging tabular interface. As with the Metrics Table, selecting a site will filter this table to the selected feature.
+You can also explore the pairs file(s) contents through a paging tabular interface.
 ![Pairs Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_table.JPG)
 
 ### Image Selector
 You can use the image selector tab to select and load WRES `.png` files for display and exploration. Selecting one or more image files and clicking "Load/Reload Images" will populate the "Image Viewer."
-![Image Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/image_selector.JPG)
+![Image Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/image_selection.JPG)
 
 ### Image Viewer
 The "Image Viewer" includes a carousel style image browser for exploring WRES plots.
-![Image Viewer](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/image_selection.JPG)
+![Image Viewer](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/image_viewer.JPG)
