@@ -31,11 +31,11 @@ Options:
 ```
 
 ## Application Interface
-The application features a tabbing interface. The "File Selector" tab is active by default. 
+The application features a tabbing interface. The "CSV Selector" tab is active by default. 
 
-### File Selector
+### CSV Selector
 The file browser starts in the directory where the application was launched. Use the arrows (`>>` or `<<`) to move the files you want to visualize from the "File Browser" to the "Selected files".
-![File Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/file_selector.JPG)
+![CSV Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/file_selector.JPG)
 
 The example below has selected the files `ABRFC.evaluation.csv.gz` and `ABRFC.pairs.csv.gz`. After selecting one or more files, click the "Load/Reload Data" button to read the files.
 ![File Selected](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/file_selection.JPG)
@@ -60,3 +60,10 @@ Once data are loaded, you will be able to explore the metrics file(s) contents t
 You can also explore the pairs file(s) contents through a paging tabular interface. As with the Metrics Table, selecting a site will filter this table to the selected feature.
 ![Pairs Table](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/pairs_table.JPG)
 
+### Image Selector
+You can use the image selector tab to select and load WRES `.png` files for display and exploration. Selecting one or more image files and clicking "Load/Reload Images" will populate the "Image Viewer."
+![Image Selector](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/image_selector.JPG)
+
+### Image Viewer
+The "Image Viewer" includes a carousel style image browser for exploring WRES plots.
+![Image Viewer](https://raw.githubusercontent.com/jarq6c/wres-explorer/main/images/image_selection.JPG)
