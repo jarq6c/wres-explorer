@@ -149,6 +149,7 @@ right_feature_selector = pn.widgets.AutocompleteInput(
     search_strategy="includes",
     placeholder="Enter NWM feature ID"
 )
+site_name_md = pn.pane.Markdown("Select a site")
 
 def update_zoom_selection(
         lat: float,
@@ -175,6 +176,7 @@ def update_selection(event, source: str):
         point = event["points"][0]
         lon = point["lon"]
         lat = point["lat"]
+        site_name_md.object = point["customdata"][0]
         map_clicked = True
         left_feature_selector.value = point["customdata"][1]
         right_feature_selector.value = point["customdata"][2]
@@ -191,6 +193,7 @@ def update_selection(event, source: str):
         site_info = custom_data[custom_data["LEFT FEATURE NAME"] == event]
         lon = site_info["LONGITUDE"].iloc[0]
         lat = site_info["LATITUDE"].iloc[0]
+        site_name_md.object = site_info["LEFT FEATURE DESCRIPTION"].iloc[0]
         left_trigger = True
         right_feature_selector.value = site_info["RIGHT FEATURE NAME"].iloc[0]
         left_trigger = False
@@ -201,6 +204,7 @@ def update_selection(event, source: str):
         site_info = custom_data[custom_data["RIGHT FEATURE NAME"] == event]
         lon = site_info["LONGITUDE"].iloc[0]
         lat = site_info["LATITUDE"].iloc[0]
+        site_name_md.object = site_info["LEFT FEATURE DESCRIPTION"].iloc[0]
         right_trigger = True
         left_feature_selector.value = site_info["LEFT FEATURE NAME"].iloc[0]
         right_trigger = False
@@ -218,10 +222,22 @@ pn.bind(update_selection,
 pn.bind(update_selection,
         right_feature_selector.param.value, watch=True, source="right_value")
 
+site_card = pn.Card(
+    site_name_md,
+    left_feature_selector,
+    right_feature_selector,
+    collapsible=False,
+    title="Site Information",
+    margin=10
+)
+map_card = pn.Card(
+    map_pane,
+    collapsible=False,
+    title="Site Map",
+    margin=10
+)
+
 pn.serve(pn.Row(
-    pn.Column(
-        left_feature_selector,
-        right_feature_selector
-    ),
-    map_pane
+    site_card,
+    map_card
 ))
