@@ -61,6 +61,12 @@ geometry = gpd.GeoSeries.from_wkt(
 )
 custom_data["LATITUDE"] = geometry.y
 custom_data["LONGITUDE"] = geometry.x
+start_date = data.select(
+    pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
+).min().collect().item(row=0, column=0)
+end_date = data.select(
+    pl.col("LATEST ISSUED TIME INCLUSIVE")
+).min().collect().item(row=0, column=0)
 
 import plotly.graph_objects as go
 import colorcet as cc
@@ -94,7 +100,7 @@ scatter_map = go.Scattermap(
         size=15,
         color=custom_data["STATISTIC"],
         colorscale=cc.gouldian,
-        colorbar=dict(title=dict(text=metric_name)),
+        colorbar=dict(title=dict(text="Bias Fraction<br>(0 to 24 hours)")),
         cmin=-1.0,
         cmax=1.0
         ),
@@ -105,7 +111,7 @@ scatter_map = go.Scattermap(
     "NWM Feature ID: %{customdata[2]}<br>"
     "Longitude: %{lon}<br>"
     "Latitude: %{lat}<br><br>"
-    f"{metric_name}: " + "%{customdata[3]:.2f}<br>"
+    "Bias Fraction: %{customdata[3]:.2f}<br>"
 )
 
 # Layout configuration
@@ -149,7 +155,6 @@ right_feature_selector = pn.widgets.AutocompleteInput(
     search_strategy="includes",
     placeholder="Enter NWM feature ID"
 )
-site_name_md = pn.pane.Markdown("Select a site")
 
 def update_zoom_selection(
         lat: float,
@@ -176,7 +181,6 @@ def update_selection(event, source: str):
         point = event["points"][0]
         lon = point["lon"]
         lat = point["lat"]
-        site_name_md.object = point["customdata"][0]
         map_clicked = True
         left_feature_selector.value = point["customdata"][1]
         right_feature_selector.value = point["customdata"][2]
@@ -193,7 +197,6 @@ def update_selection(event, source: str):
         site_info = custom_data[custom_data["LEFT FEATURE NAME"] == event]
         lon = site_info["LONGITUDE"].iloc[0]
         lat = site_info["LATITUDE"].iloc[0]
-        site_name_md.object = site_info["LEFT FEATURE DESCRIPTION"].iloc[0]
         left_trigger = True
         right_feature_selector.value = site_info["RIGHT FEATURE NAME"].iloc[0]
         left_trigger = False
@@ -204,7 +207,6 @@ def update_selection(event, source: str):
         site_info = custom_data[custom_data["RIGHT FEATURE NAME"] == event]
         lon = site_info["LONGITUDE"].iloc[0]
         lat = site_info["LATITUDE"].iloc[0]
-        site_name_md.object = site_info["LEFT FEATURE DESCRIPTION"].iloc[0]
         right_trigger = True
         left_feature_selector.value = site_info["LEFT FEATURE NAME"].iloc[0]
         right_trigger = False
@@ -222,13 +224,24 @@ pn.bind(update_selection,
 pn.bind(update_selection,
         right_feature_selector.param.value, watch=True, source="right_value")
 
+detail_card = pn.Card(
+    pn.pane.Markdown(
+        "**Configuration**: Medium Range<br>"
+        f"**Start date**: {start_date}<br>"
+        f"**End date**: {end_date}<br>"
+    ),
+    title="Evaluation Details",
+    collapsible=False,
+    margin=10,
+    width=325
+)
 site_card = pn.Card(
-    site_name_md,
     left_feature_selector,
     right_feature_selector,
     collapsible=False,
-    title="Site Information",
-    margin=10
+    title="Site Selection",
+    margin=10,
+    width=325
 )
 map_card = pn.Card(
     map_pane,
@@ -238,6 +251,6 @@ map_card = pn.Card(
 )
 
 pn.serve(pn.Row(
-    site_card,
+    pn.Column(detail_card, site_card),
     map_card
 ))
