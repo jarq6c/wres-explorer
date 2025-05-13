@@ -111,7 +111,7 @@ scatter_map = go.Scattermap(
     "NWM Feature ID: %{customdata[2]}<br>"
     "Longitude: %{lon}<br>"
     "Latitude: %{lat}<br><br>"
-    "Bias Fraction: %{customdata[3]:.2f}<br>"
+    "Bias Fraction: %{marker.color:.2f}<br>"
 )
 
 # Layout configuration
