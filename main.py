@@ -2,9 +2,15 @@ import polars as pl
 import polars.datatypes as pldt
 import numpy as np
 
-ifiles: list[str] = ["data/ABRFC.evaluation.csv.gz"]
+from dataclasses import dataclass
+from datetime import datetime
+import plotly.graph_objects as go
+import colorcet as cc
+import panel as pn
+from param.parameterized import Parameter
+import geopandas as gpd
 
-dtype_mapping: dict[str, pl.DataType] = {
+DTYPE_MAPPING: dict[str, pl.DataType] = {
     "LEFT FEATURE NAME": pldt.String,
     "LEFT FEATURE WKT": pldt.String,
     "LEFT FEATURE DESCRIPTION": pldt.String,
@@ -17,63 +23,90 @@ dtype_mapping: dict[str, pl.DataType] = {
     "SAMPLE QUANTILE": pldt.Float32,
     "STATISTIC": pldt.Float32
 }
+"""Mapping from WRES standard column names to polars datatypes."""
 
-evaluation_period: int = 90
-metric_name: str = "BIAS FRACTION"
-sample_quantile: float = np.nan
-earliest_lead_time: int = 0
+@dataclass
+class DataManager:
+    """Dataclass for managing and retrieving WRES evaluation output."""
+    file_list: list[str] | None = None
+    dtype_mapping: dict[str, pl.DataType] | None = None
 
-data = pl.scan_csv(
-    ifiles,
-    schema_overrides=dtype_mapping
-    ).with_columns(
-        (pl.col("LATEST ISSUED TIME INCLUSIVE") -
-         pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
-         ).alias("EVALUATION PERIOD")
-    ).filter(
-        pl.col("EVALUATION PERIOD") == pl.duration(days=evaluation_period)
-    ).filter(
-        pl.col("METRIC NAME") == metric_name
-    ).filter(
-        pl.col("SAMPLE QUANTILE").is_null()
-    ).with_columns(
-        pl.col("EARLIEST LEAD DURATION EXCLUSIVE"
-               ).str.extract("(\\d+)").alias(
-                   "EARLIEST LEAD TIME").cast(pldt.Int32),
-        pl.col("LATEST LEAD DURATION INCLUSIVE"
-               ).str.extract("(\\d+)").alias(
-                   "LATEST LEAD TIME").cast(pldt.Int32)
-    ).filter(
-        pl.col("EARLIEST LEAD TIME") == earliest_lead_time
-    )
+    def __post_init__(self):
+        if self.dtype_mapping is None:
+            self.dtype_mapping = DTYPE_MAPPING
 
-import geopandas as gpd
+    def load_dataframe(self) -> pl.DataFrame:
+        """Lazily scan input files and return dataframe."""
+        return pl.scan_csv(
+            self.file_list,
+            schema_overrides=self.dtype_mapping
+            ).select(list(self.dtype_mapping.keys())
+            ).with_columns(
+                (pl.col("LATEST ISSUED TIME INCLUSIVE") -
+                pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
+                ).alias("EVALUATION PERIOD"),
+                pl.col("EARLIEST LEAD DURATION EXCLUSIVE"
+                    ).str.extract("(\\d+)").alias(
+                        "EARLIEST LEAD TIME").cast(pldt.Int32),
+                pl.col("LATEST LEAD DURATION INCLUSIVE"
+                    ).str.extract("(\\d+)").alias(
+                        "LATEST LEAD TIME").cast(pldt.Int32)
+            )
+    
+    def load_feature_mapping(self) -> pl.DataFrame:
+        return self.load_dataframe().select(
+            pl.col("LEFT FEATURE DESCRIPTION"),
+            pl.col("LEFT FEATURE NAME"),
+            pl.col("RIGHT FEATURE NAME"),
+            pl.col("LEFT FEATURE WKT")
+        ).unique()
+    
+    def load_metrics(
+        self,
+        *filters,
+        select: list[str] | None = None
+        ) -> pl.DataFrame:
+        if select is None:
+            return self.load_dataframe(
+                ).filter(
+                    *filters
+                )
+        return self.load_dataframe(
+            ).filter(
+                *filters
+            ).select(select)
+    
+    @property
+    def geometry(self) -> gpd.GeoSeries:
+        return gpd.GeoSeries.from_wkt(
+            self.load_feature_mapping().select(
+                pl.col("LEFT FEATURE WKT")
+            ).collect().to_pandas()["LEFT FEATURE WKT"]
+        )
+    
+    @property
+    def start_date(self) -> datetime:
+        return self.load_dataframe().select(
+            pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
+        ).min().collect().item(row=0, column=0)
+    
+    @property
+    def end_date(self) -> datetime:
+        return self.load_dataframe().select(
+            pl.col("LATEST ISSUED TIME INCLUSIVE")
+        ).max().collect().item(row=0, column=0)
 
-custom_data = data.select(
-    pl.col("LEFT FEATURE DESCRIPTION"),
-    pl.col("LEFT FEATURE NAME"),
-    pl.col("RIGHT FEATURE NAME"),
-    pl.col("STATISTIC"),
-    pl.col("LEFT FEATURE WKT")
-).collect().to_pandas()
-geometry = gpd.GeoSeries.from_wkt(
-    custom_data["LEFT FEATURE WKT"]
-)
-custom_data["LATITUDE"] = geometry.y
-custom_data["LONGITUDE"] = geometry.x
-start_date = data.select(
-    pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
-).min().collect().item(row=0, column=0)
-end_date = data.select(
-    pl.col("LATEST ISSUED TIME INCLUSIVE")
-).min().collect().item(row=0, column=0)
+data_manager = DataManager(["data/ABRFC.evaluation.csv.gz"])
 
-from dataclasses import dataclass
-from datetime import datetime
-import plotly.graph_objects as go
-import colorcet as cc
-import panel as pn
-from param.parameterized import Parameter
+print(data_manager.load_metrics(
+    (pl.col("EARLIEST LEAD TIME") == 0),
+    (pl.col("SAMPLE QUANTILE").is_null()),
+    (pl.col("EVALUATION PERIOD") == pl.duration(days=90)),
+    (pl.col("METRIC NAME") == "BIAS FRACTION"),
+    select=["LEFT FEATURE NAME", "STATISTIC"]
+    ).collect())
+# TODO setup SiteSelector to work with functions that retrieve data
+quit()
 
 @dataclass
 class SiteSelector:
