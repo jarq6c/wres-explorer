@@ -73,6 +73,7 @@ from datetime import datetime
 import plotly.graph_objects as go
 import colorcet as cc
 import panel as pn
+from param.parameterized import Parameter
 
 @dataclass
 class SiteSelector:
@@ -83,13 +84,13 @@ class SiteSelector:
     model_name: str
     start_date: datetime
     end_date: datetime
-    metric_label: str
+    metric_labels: list[str]
     usgs_site_codes: list[str]
     nwm_feature_ids: list[str]
     site_descriptions: list[str]
     latitudes: list[float]
     longitudes: list[float]
-    statistics: list[float]
+    statistics: list[list[float]]
     _freeze_updates: bool = False
     _layout: go.Layout | None = None
     _map_pane: pn.pane.Plotly | None = None
@@ -123,9 +124,10 @@ class SiteSelector:
             mode="markers",
             marker=dict(
                 size=15,
-                color=self.statistics,
+                color=self.statistics[0],
                 colorscale=cc.gouldian,
-                colorbar=dict(title=dict(text=self.metric_label)),
+                colorbar=dict(title=dict(
+                    text=self.metric_labels[0], side="right")),
                 cmin=-1.0,
                 cmax=1.0
                 ),
@@ -184,13 +186,20 @@ class SiteSelector:
             search_strategy="includes",
             placeholder="Enter NWM feature ID"
         )
+        self._selected_metric = pn.widgets.Select(
+            name="Metric",
+            options=self.metric_labels
+        )
 
         # Build layout elements
         detail_card = pn.Card(
-            pn.pane.Markdown(
-                f"**Configuration**: {self.model_name}<br>"
-                f"**Start date**: {self.start_date}<br>"
-                f"**End date**: {self.end_date}<br>"
+            pn.Column(
+                pn.pane.Markdown(
+                    f"**Configuration**: {self.model_name}<br>"
+                    f"**Start date**: {self.start_date}<br>"
+                    f"**End date**: {self.end_date}<br>"
+                ),
+                self._selected_metric
             ),
             title="Evaluation Details",
             collapsible=False,
@@ -287,23 +296,23 @@ class SiteSelector:
         self._map_pane.relayout_data.update({"map.zoom": zoom})
     
     @property
-    def selected(self) -> str:
+    def selected(self) -> Parameter:
         if self._left_feature_selector is None:
-            return None
-        return self._left_feature_selector.value
+            raise RuntimeError("Must run generate before accessing parameter")
+        return self._left_feature_selector.param.value
 
 def get_site_selector() -> pn.Row:
     return SiteSelector(
         model_name="NWM Medium Range Deterministic",
         start_date=start_date,
         end_date=end_date,
-        metric_label="Bias Fraction<br>(0 to 24 hours)",
+        metric_labels=["Bias Fraction (0 to 24 hours)"],
         usgs_site_codes=custom_data["LEFT FEATURE NAME"].to_list(),
         nwm_feature_ids=custom_data["RIGHT FEATURE NAME"].to_list(),
         site_descriptions=custom_data["LEFT FEATURE DESCRIPTION"].to_list(),
         latitudes=custom_data["LATITUDE"].to_list(),
         longitudes=custom_data["LONGITUDE"].to_list(),
-        statistics=custom_data["STATISTIC"].to_list()
+        statistics=[custom_data["STATISTIC"].to_list()]
     ).generate()
 
 pn.serve(get_site_selector)
