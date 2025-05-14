@@ -68,189 +68,242 @@ end_date = data.select(
     pl.col("LATEST ISSUED TIME INCLUSIVE")
 ).min().collect().item(row=0, column=0)
 
+from dataclasses import dataclass
+from datetime import datetime
 import plotly.graph_objects as go
 import colorcet as cc
-
-# Build figure
-selected_marker = go.Scattermap(
-    showlegend=False,
-    name="",
-    lat=custom_data["LATITUDE"].iloc[:1],
-    lon=custom_data["LONGITUDE"].iloc[:1],
-    mode="markers",
-    marker=dict(
-        size=1,
-        color="magenta"
-        ),
-    selected=dict(
-        marker=dict(
-            color="magenta"
-        )
-    ),
-)
-
-# Add Map
-scatter_map = go.Scattermap(
-    showlegend=False,
-    name="",
-    lat=custom_data["LATITUDE"],
-    lon=custom_data["LONGITUDE"],
-    mode="markers",
-    marker=dict(
-        size=15,
-        color=custom_data["STATISTIC"],
-        colorscale=cc.gouldian,
-        colorbar=dict(title=dict(text="Bias Fraction<br>(0 to 24 hours)")),
-        cmin=-1.0,
-        cmax=1.0
-        ),
-    customdata=custom_data,
-    hovertemplate=
-    "%{customdata[0]}<br>"
-    "USGS Site Code: %{customdata[1]}<br>"
-    "NWM Feature ID: %{customdata[2]}<br>"
-    "Longitude: %{lon}<br>"
-    "Latitude: %{lat}<br><br>"
-    "Bias Fraction: %{marker.color:.2f}<br>"
-)
-
-# Layout configuration
-layout = go.Layout(
-    showlegend=False,
-    height=720,
-    width=1280,
-    margin=dict(l=0, r=0, t=50, b=0),
-    map=dict(
-        style="satellite-streets",
-        center={
-            "lat": custom_data["LATITUDE"].mean(),
-            "lon": custom_data["LONGITUDE"].mean()
-            },
-        zoom=3
-    ),
-    clickmode="event",
-    modebar=dict(
-        remove=["lasso", "select"]
-    ),
-    dragmode="zoom"
-)
-
 import panel as pn
 
-patch = {
-    "data": [selected_marker, scatter_map],
-    "layout": layout
-}
+@dataclass
+class SiteSelector:
+    """
+    A clickable mapping interface to display evaluation statistics on a
+    map and select points for more detailed inspection.
+    """
+    model_name: str
+    start_date: datetime
+    end_date: datetime
+    metric_label: str
+    usgs_site_codes: list[str]
+    nwm_feature_ids: list[str]
+    site_descriptions: list[str]
+    latitudes: list[float]
+    longitudes: list[float]
+    statistics: list[float]
+    _freeze_updates: bool = False
+    _layout: go.Layout | None = None
+    _map_pane: pn.pane.Plotly | None = None
+    _left_feature_selector: pn.widgets.AutocompleteInput | None = None
 
-map_pane = pn.pane.Plotly(patch)
-left_feature_selector = pn.widgets.AutocompleteInput(
-    name="USGS Site Code",
-    options=custom_data["LEFT FEATURE NAME"].to_list(),
-    search_strategy="includes",
-    placeholder="Enter USGS site code"
-)
-right_feature_selector = pn.widgets.AutocompleteInput(
-    name="NWM Feature ID",
-    options=custom_data["RIGHT FEATURE NAME"].to_list(),
-    search_strategy="includes",
-    placeholder="Enter NWM feature ID"
-)
-
-def update_zoom_selection(
-        lat: float,
-        lon: float,
-        zoom: int = 5):
-    layout["map"]["center"].update({
-        "lat": lat,
-        "lon": lon
-    })
-    layout["map"].update({
-        "zoom": zoom
-    })
-    map_pane.relayout_data.update({"map.center": {"lat": lat, "lon": lon}})
-    map_pane.relayout_data.update({"map.zoom": zoom})
-
-map_clicked = False
-left_trigger = False
-right_trigger = False
-def update_selection(event, source: str):
-    global map_clicked
-    global left_trigger
-    global right_trigger
-    if source == "click_data":
-        point = event["points"][0]
-        lon = point["lon"]
-        lat = point["lat"]
-        map_clicked = True
-        left_feature_selector.value = point["customdata"][1]
-        right_feature_selector.value = point["customdata"][2]
-        map_clicked = False
-        if "map.center" in map_pane.relayout_data:
-            update_zoom_selection(
-                map_pane.relayout_data["map.center"]["lat"],
-                map_pane.relayout_data["map.center"]["lon"],
-                map_pane.relayout_data["map.zoom"]
+    def generate(self) -> pn.Row:
+        # Selection highlight marker
+        selected_marker = go.Scattermap(
+            showlegend=False,
+            name="",
+            lat=self.latitudes[:1],
+            lon=self.longitudes[:1],
+            mode="markers",
+            marker=dict(
+                size=1,
+                color="magenta"
+                ),
+            selected=dict(
+                marker=dict(
+                    color="magenta"
                 )
-    elif source == "left_value":
-        if map_clicked or right_trigger:
-            return
-        site_info = custom_data[custom_data["LEFT FEATURE NAME"] == event]
-        lon = site_info["LONGITUDE"].iloc[0]
-        lat = site_info["LATITUDE"].iloc[0]
-        left_trigger = True
-        right_feature_selector.value = site_info["RIGHT FEATURE NAME"].iloc[0]
-        left_trigger = False
-        update_zoom_selection(lat, lon)
-    elif source == "right_value":
-        if map_clicked or left_trigger:
-            return
-        site_info = custom_data[custom_data["RIGHT FEATURE NAME"] == event]
-        lon = site_info["LONGITUDE"].iloc[0]
-        lat = site_info["LATITUDE"].iloc[0]
-        right_trigger = True
-        left_feature_selector.value = site_info["LEFT FEATURE NAME"].iloc[0]
-        right_trigger = False
-        update_zoom_selection(lat, lon)
-    selected_marker.update({
-        "lat": [lat], "lon": [lon]
-    })
-    if selected_marker["marker"]["size"] != 25:
-        selected_marker["marker"].update({"size": 25})
-    map_pane.object = patch
-pn.bind(update_selection,
-        map_pane.param.click_data, watch=True, source="click_data")
-pn.bind(update_selection,
-        left_feature_selector.param.value, watch=True, source="left_value")
-pn.bind(update_selection,
-        right_feature_selector.param.value, watch=True, source="right_value")
+            ),
+        )
 
-detail_card = pn.Card(
-    pn.pane.Markdown(
-        "**Configuration**: Medium Range<br>"
-        f"**Start date**: {start_date}<br>"
-        f"**End date**: {end_date}<br>"
-    ),
-    title="Evaluation Details",
-    collapsible=False,
-    margin=10,
-    width=325
-)
-site_card = pn.Card(
-    left_feature_selector,
-    right_feature_selector,
-    collapsible=False,
-    title="Site Selection",
-    margin=10,
-    width=325
-)
-map_card = pn.Card(
-    map_pane,
-    collapsible=False,
-    title="Site Map",
-    margin=10
-)
+        # Main map
+        scatter_map = go.Scattermap(
+            showlegend=False,
+            name="",
+            lat=self.latitudes,
+            lon=self.longitudes,
+            mode="markers",
+            marker=dict(
+                size=15,
+                color=self.statistics,
+                colorscale=cc.gouldian,
+                colorbar=dict(title=dict(text=self.metric_label)),
+                cmin=-1.0,
+                cmax=1.0
+                ),
+            customdata=np.column_stack((
+                self.site_descriptions,
+                self.usgs_site_codes,
+                self.nwm_feature_ids
+            )),
+            hovertemplate=
+            "%{customdata[0]}<br>"
+            "USGS Site Code: %{customdata[1]}<br>"
+            "NWM Feature ID: %{customdata[2]}<br>"
+            "Longitude: %{lon}<br>"
+            "Latitude: %{lat}<br><br>"
+            "Bias Fraction: %{marker.color:.2f}<br>"
+        )
 
-pn.serve(pn.Row(
-    pn.Column(detail_card, site_card),
-    map_card
-))
+        # Layout configuration
+        self._layout = go.Layout(
+            showlegend=False,
+            height=720,
+            width=1280,
+            margin=dict(l=0, r=0, t=50, b=0),
+            map=dict(
+                style="satellite-streets",
+                center={
+                    "lat": np.mean(self.latitudes),
+                    "lon": np.mean(self.longitudes)
+                    },
+                zoom=3
+            ),
+            clickmode="event",
+            modebar=dict(
+                remove=["lasso", "select"]
+            ),
+            dragmode="zoom"
+        )
+
+        # Patch for updating map
+        self.figure_data = {
+            "data": [selected_marker, scatter_map],
+            "layout": self._layout
+        }
+
+        # Widgets
+        self._map_pane = pn.pane.Plotly(self.figure_data)
+        self._left_feature_selector = pn.widgets.AutocompleteInput(
+            name="USGS Site Code",
+            options=self.usgs_site_codes,
+            search_strategy="includes",
+            placeholder="Enter USGS site code"
+        )
+        right_feature_selector = pn.widgets.AutocompleteInput(
+            name="NWM Feature ID",
+            options=self.nwm_feature_ids,
+            search_strategy="includes",
+            placeholder="Enter NWM feature ID"
+        )
+
+        # Build layout elements
+        detail_card = pn.Card(
+            pn.pane.Markdown(
+                f"**Configuration**: {self.model_name}<br>"
+                f"**Start date**: {self.start_date}<br>"
+                f"**End date**: {self.end_date}<br>"
+            ),
+            title="Evaluation Details",
+            collapsible=False,
+            margin=10,
+            width=325
+        )
+        site_card = pn.Card(
+            self._left_feature_selector,
+            right_feature_selector,
+            collapsible=False,
+            title="Site Selection",
+            margin=10,
+            width=325
+        )
+        map_card = pn.Card(
+            self._map_pane,
+            collapsible=False,
+            title="Site Map",
+            margin=10
+        )
+
+        def update_selection(event, source: str):
+            if self._freeze_updates:
+                return
+            if source == "click_data":
+                point = event["points"][0]
+                lon = point["lon"]
+                lat = point["lat"]
+                self._freeze_updates = True
+                self._left_feature_selector.value = point["customdata"][1]
+                right_feature_selector.value = point["customdata"][2]
+                self._freeze_updates = False
+                if "map.center" in self._map_pane.relayout_data:
+                    self.update_zoom(
+                        self._map_pane.relayout_data["map.center"]["lat"],
+                        self._map_pane.relayout_data["map.center"]["lon"],
+                        self._map_pane.relayout_data["map.zoom"]
+                        )
+            elif source == "left_value":
+                idx = self.usgs_site_codes.index(event)
+                lon = self.longitudes[idx]
+                lat = self.latitudes[idx]
+                self._freeze_updates = True
+                right_feature_selector.value = self.nwm_feature_ids[idx]
+                self._freeze_updates = False
+                self.update_zoom(lat, lon)
+            elif source == "right_value":
+                idx = self.nwm_feature_ids.index(event)
+                lon = self.longitudes[idx]
+                lat = self.latitudes[idx]
+                self._freeze_updates = True
+                self._left_feature_selector.value = self.usgs_site_codes[idx]
+                self._freeze_updates = False
+                self.update_zoom(lat, lon)
+            selected_marker.update({
+                "lat": [lat], "lon": [lon]
+            })
+            if selected_marker["marker"]["size"] != 25:
+                selected_marker["marker"].update({"size": 25})
+            self._map_pane.object = self.figure_data
+        pn.bind(update_selection,
+                self._map_pane.param.click_data, watch=True,
+                source="click_data")
+        pn.bind(update_selection,
+                self._left_feature_selector.param.value, watch=True,
+                source="left_value")
+        pn.bind(update_selection,
+                right_feature_selector.param.value, watch=True,
+                source="right_value")
+
+        # Final layout
+        return pn.Row(
+            pn.Column(detail_card, site_card),
+            map_card
+        )
+    
+    def update_zoom(
+            self,
+            lat: float,
+            lon: float,
+            zoom: int = 5
+            ) -> None:
+        if self._layout is None:
+            return
+        self._layout["map"]["center"].update({
+            "lat": lat,
+            "lon": lon
+        })
+        self._layout["map"].update({
+            "zoom": zoom
+        })
+        self._map_pane.relayout_data.update({
+            "map.center": {"lat": lat, "lon": lon}})
+        self._map_pane.relayout_data.update({"map.zoom": zoom})
+    
+    @property
+    def selected(self) -> str:
+        if self._left_feature_selector is None:
+            return None
+        return self._left_feature_selector.value
+
+def get_site_selector() -> pn.Row:
+    return SiteSelector(
+        model_name="NWM Medium Range Deterministic",
+        start_date=start_date,
+        end_date=end_date,
+        metric_label="Bias Fraction<br>(0 to 24 hours)",
+        usgs_site_codes=custom_data["LEFT FEATURE NAME"].to_list(),
+        nwm_feature_ids=custom_data["RIGHT FEATURE NAME"].to_list(),
+        site_descriptions=custom_data["LEFT FEATURE DESCRIPTION"].to_list(),
+        latitudes=custom_data["LATITUDE"].to_list(),
+        longitudes=custom_data["LONGITUDE"].to_list(),
+        statistics=custom_data["STATISTIC"].to_list()
+    ).generate()
+
+pn.serve(get_site_selector)
