@@ -130,15 +130,11 @@ class EvaluationCSVManager:
         return self._dataframe.select(
             pl.col("LATEST ISSUED TIME INCLUSIVE")
         ).max().collect().item(row=0, column=0)
-
-evaluation_data = EvaluationCSVManager(["data/ABRFC.evaluation.csv.gz"])
-
-print(evaluation_data.load_metric_map(
-    metric_name="BIAS FRACTION",
-    earliest_lead_time=0
-))
-# TODO setup SiteSelector to work with functions that retrieve data
-quit()
+    
+    @property
+    def metric_names(self) -> list[str]:
+        return self._dataframe.select(
+            "METRIC NAME").unique().collect()["METRIC NAME"].to_list()
 
 @dataclass
 class SiteSelector:
@@ -147,27 +143,27 @@ class SiteSelector:
     map and select points for more detailed inspection.
     """
     model_name: str
-    start_date: datetime
-    end_date: datetime
-    metric_labels: list[str]
-    usgs_site_codes: list[str]
-    nwm_feature_ids: list[str]
-    site_descriptions: list[str]
-    latitudes: list[float]
-    longitudes: list[float]
-    statistics: list[list[float]]
+    evaluation_data: EvaluationCSVManager
     _freeze_updates: bool = False
     _layout: go.Layout | None = None
     _map_pane: pn.pane.Plotly | None = None
     _left_feature_selector: pn.widgets.AutocompleteInput | None = None
 
     def generate(self) -> pn.Row:
+        # Load features and metric data
+        metric_label = "BIAS FRACTION"
+        features = self.evaluation_data.feature_mapping.reset_index()
+        metrics = self.evaluation_data.load_metric_map(
+            metric_name=metric_label,
+            earliest_lead_time=0
+        )
+
         # Selection highlight marker
         selected_marker = go.Scattermap(
             showlegend=False,
             name="",
-            lat=self.latitudes[:1],
-            lon=self.longitudes[:1],
+            lat=features["geometry"].y[:1],
+            lon=features["geometry"].x[:1],
             mode="markers",
             marker=dict(
                 size=1,
@@ -184,26 +180,22 @@ class SiteSelector:
         scatter_map = go.Scattermap(
             showlegend=False,
             name="",
-            lat=self.latitudes,
-            lon=self.longitudes,
+            lat=features["geometry"].y,
+            lon=features["geometry"].x,
             mode="markers",
             marker=dict(
                 size=15,
-                color=self.statistics[0],
+                color=metrics["STATISTIC"],
                 colorscale=cc.gouldian,
                 colorbar=dict(title=dict(
-                    text=self.metric_labels[0], side="right")),
+                    text=metric_label, side="right")),
                 cmin=-1.0,
                 cmax=1.0
                 ),
-            customdata=np.column_stack((
-                self.site_descriptions,
-                self.usgs_site_codes,
-                self.nwm_feature_ids
-            )),
+            customdata=features.drop("geometry", axis=1),
             hovertemplate=
-            "%{customdata[0]}<br>"
-            "USGS Site Code: %{customdata[1]}<br>"
+            "%{customdata[1]}<br>"
+            "USGS Site Code: %{customdata[0]}<br>"
             "NWM Feature ID: %{customdata[2]}<br>"
             "Longitude: %{lon}<br>"
             "Latitude: %{lat}<br><br>"
@@ -219,8 +211,8 @@ class SiteSelector:
             map=dict(
                 style="satellite-streets",
                 center={
-                    "lat": np.mean(self.latitudes),
-                    "lon": np.mean(self.longitudes)
+                    "lat": features["geometry"].y.mean(),
+                    "lon": features["geometry"].x.mean()
                     },
                 zoom=3
             ),
@@ -241,19 +233,19 @@ class SiteSelector:
         self._map_pane = pn.pane.Plotly(self.figure_data)
         self._left_feature_selector = pn.widgets.AutocompleteInput(
             name="USGS Site Code",
-            options=self.usgs_site_codes,
+            options=features["LEFT FEATURE NAME"].to_list(),
             search_strategy="includes",
             placeholder="Enter USGS site code"
         )
         right_feature_selector = pn.widgets.AutocompleteInput(
             name="NWM Feature ID",
-            options=self.nwm_feature_ids,
+            options=features["RIGHT FEATURE NAME"].to_list(),
             search_strategy="includes",
             placeholder="Enter NWM feature ID"
         )
         self._selected_metric = pn.widgets.Select(
             name="Metric",
-            options=self.metric_labels
+            options=self.evaluation_data.metric_names
         )
 
         # Build layout elements
@@ -261,8 +253,8 @@ class SiteSelector:
             pn.Column(
                 pn.pane.Markdown(
                     f"**Configuration**: {self.model_name}<br>"
-                    f"**Start date**: {self.start_date}<br>"
-                    f"**End date**: {self.end_date}<br>"
+                    f"**Start date**: {self.evaluation_data.start_date}<br>"
+                    f"**End date**: {self.evaluation_data.end_date}<br>"
                 ),
                 self._selected_metric
             ),
@@ -294,7 +286,7 @@ class SiteSelector:
                 lon = point["lon"]
                 lat = point["lat"]
                 self._freeze_updates = True
-                self._left_feature_selector.value = point["customdata"][1]
+                self._left_feature_selector.value = point["customdata"][0]
                 right_feature_selector.value = point["customdata"][2]
                 self._freeze_updates = False
                 if "map.center" in self._map_pane.relayout_data:
@@ -304,19 +296,19 @@ class SiteSelector:
                         self._map_pane.relayout_data["map.zoom"]
                         )
             elif source == "left_value":
-                idx = self.usgs_site_codes.index(event)
-                lon = self.longitudes[idx]
-                lat = self.latitudes[idx]
+                idx = self._left_feature_selector.options.index(event)
+                lon = features.iloc[idx, :]["geometry"].x
+                lat = features.iloc[idx, :]["geometry"].y
                 self._freeze_updates = True
-                right_feature_selector.value = self.nwm_feature_ids[idx]
+                right_feature_selector.value = right_feature_selector.options[idx]
                 self._freeze_updates = False
                 self.update_zoom(lat, lon)
             elif source == "right_value":
-                idx = self.nwm_feature_ids.index(event)
-                lon = self.longitudes[idx]
-                lat = self.latitudes[idx]
+                idx = right_feature_selector.options.index(event)
+                lon = features.iloc[idx, :]["geometry"].x
+                lat = features.iloc[idx, :]["geometry"].y
                 self._freeze_updates = True
-                self._left_feature_selector.value = self.usgs_site_codes[idx]
+                self._left_feature_selector.value = self._left_feature_selector.options[idx]
                 self._freeze_updates = False
                 self.update_zoom(lat, lon)
             selected_marker.update({
@@ -369,15 +361,7 @@ class SiteSelector:
 def get_site_selector() -> pn.Row:
     return SiteSelector(
         model_name="NWM Medium Range Deterministic",
-        start_date=start_date,
-        end_date=end_date,
-        metric_labels=["Bias Fraction (0 to 24 hours)"],
-        usgs_site_codes=custom_data["LEFT FEATURE NAME"].to_list(),
-        nwm_feature_ids=custom_data["RIGHT FEATURE NAME"].to_list(),
-        site_descriptions=custom_data["LEFT FEATURE DESCRIPTION"].to_list(),
-        latitudes=custom_data["LATITUDE"].to_list(),
-        longitudes=custom_data["LONGITUDE"].to_list(),
-        statistics=[custom_data["STATISTIC"].to_list()]
+        evaluation_data=EvaluationCSVManager(["data/ABRFC.evaluation.csv.gz"])
     ).generate()
 
 pn.serve(get_site_selector)
