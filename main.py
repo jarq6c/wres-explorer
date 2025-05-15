@@ -136,6 +136,11 @@ class EvaluationCSVManager:
         return self._dataframe.select(
             "METRIC NAME").unique().collect()["METRIC NAME"].to_list()
 
+METRIC_COLORBAR_LIMITS: dict[str, tuple[float, float]] = {
+    "BIAS FRACTION": (-1.0, 1.0)
+}
+"""Mapping from metric names to (cmin, cmax) for colorbar vizualizations."""
+
 @dataclass
 class SiteSelector:
     """
@@ -177,6 +182,7 @@ class SiteSelector:
         )
 
         # Main map
+        cmin, cmax = METRIC_COLORBAR_LIMITS.get(metric_label, (None, None))
         scatter_map = go.Scattermap(
             showlegend=False,
             name="",
@@ -189,8 +195,8 @@ class SiteSelector:
                 colorscale=cc.gouldian,
                 colorbar=dict(title=dict(
                     text=metric_label, side="right")),
-                cmin=-1.0,
-                cmax=1.0
+                cmin=cmin,
+                cmax=cmax
                 ),
             customdata=features.drop("geometry", axis=1),
             hovertemplate=
@@ -326,6 +332,41 @@ class SiteSelector:
         pn.bind(update_selection,
                 right_feature_selector.param.value, watch=True,
                 source="right_value")
+        
+        def update_metric_scatter(metric_label):
+            metrics = self.evaluation_data.load_metric_map(
+                metric_name=metric_label,
+                earliest_lead_time=0
+            )
+            cmin, cmax = METRIC_COLORBAR_LIMITS.get(metric_label, (None, None))
+            scatter_map.update(dict(
+                lat=metrics["geometry"].y,
+                lon=metrics["geometry"].x,
+                marker=dict(
+                    size=15,
+                    color=metrics["STATISTIC"],
+                    colorscale=cc.gouldian,
+                    colorbar=dict(
+                        title=dict(
+                            text=metric_label,
+                            side="right"
+                            )
+                        ),
+                        cmin=cmin,
+                        cmax=cmax
+                    ),
+                customdata=features.drop("geometry", axis=1),
+                hovertemplate=
+                "%{customdata[1]}<br>"
+                "USGS Site Code: %{customdata[0]}<br>"
+                "NWM Feature ID: %{customdata[2]}<br>"
+                "Longitude: %{lon}<br>"
+                "Latitude: %{lat}<br><br>"
+                f"{metric_label}: " + "%{marker.color:.2f}<br>"
+            ))
+            self._map_pane.object = self.figure_data
+        pn.bind(update_metric_scatter, self._selected_metric.param.value,
+                watch=True)
 
         # Final layout
         return pn.Row(
