@@ -26,8 +26,18 @@ DTYPE_MAPPING: dict[str, pl.DataType] = {
 """Mapping from WRES standard column names to polars datatypes."""
 
 @dataclass
-class DataManager:
-    """Dataclass for managing and retrieving WRES evaluation output."""
+class EvaluationCSVManager:
+    """
+    Dataclass for managing and retrieving WRES evaluation CSV output.
+
+    Attributes
+    ----------
+    file_list: list[str], required
+        List of file paths to evaluation.csv.gz files containg evaluation
+        metrics in WRES csv2 format.
+    dtype_mapping: dict[str, pl.DataType], optional
+        Mapping from column names to polars data types.
+    """
     file_list: list[str]
     dtype_mapping: dict[str, pl.DataType] | None = None
 
@@ -35,7 +45,7 @@ class DataManager:
         if self.dtype_mapping is None:
             self.dtype_mapping = DTYPE_MAPPING
 
-        self.dataframe = pl.scan_csv(
+        self._dataframe = pl.scan_csv(
             self.file_list,
             schema_overrides=self.dtype_mapping
             ).select(list(self.dtype_mapping.keys())
@@ -57,16 +67,43 @@ class DataManager:
         select: list[str] | None = None
         ) -> pl.DataFrame:
         if select is None:
-            return self.dataframe.filter(
+            return self._dataframe.filter(
                     *filters
                 )
-        return self.dataframe.filter(
+        return self._dataframe.filter(
                 *filters
             ).select(select)
     
+    def load_metric_map(
+            self,
+            metric_name: str,
+            earliest_lead_time: int,
+            sample_quantile: float = np.nan,
+            evaluation_period: pl.Duration | None = None,
+            ) -> gpd.GeoDataFrame:
+        if np.isnan(sample_quantile):
+            sq_filter = pl.col("SAMPLE QUANTILE").is_null()
+        else:
+            sq_filter = pl.col("SAMPLE QUANTILE") == sample_quantile
+        if evaluation_period is None:
+            evaluation_period = pl.duration(days=90)
+        df = self.query(
+            (pl.col("EARLIEST LEAD TIME") == earliest_lead_time),
+            sq_filter,
+            (pl.col("EVALUATION PERIOD") == evaluation_period),
+            (pl.col("METRIC NAME") == metric_name),
+            select=["LEFT FEATURE NAME", "STATISTIC"]
+            ).collect().to_pandas().set_index("LEFT FEATURE NAME")
+        df["geometry"] = self.geometry
+        return gpd.GeoDataFrame(df)
+    
+    @property
+    def dataframe(self) -> pl.LazyFrame:
+        return self._dataframe
+    
     @property
     def feature_mapping(self) -> gpd.GeoDataFrame:
-        df = self.dataframe.select(
+        df = self._dataframe.select(
             pl.col("LEFT FEATURE DESCRIPTION"),
             pl.col("LEFT FEATURE NAME"),
             pl.col("RIGHT FEATURE NAME"),
@@ -76,7 +113,7 @@ class DataManager:
     
     @property
     def geometry(self) -> gpd.GeoSeries:
-        df = self.dataframe.select(
+        df = self._dataframe.select(
             pl.col("LEFT FEATURE NAME"),
             pl.col("LEFT FEATURE WKT")
         ).unique().collect().to_pandas().set_index("LEFT FEATURE NAME")
@@ -84,26 +121,22 @@ class DataManager:
     
     @property
     def start_date(self) -> datetime:
-        return self.dataframe.select(
+        return self._dataframe.select(
             pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
         ).min().collect().item(row=0, column=0)
     
     @property
     def end_date(self) -> datetime:
-        return self.dataframe.select(
+        return self._dataframe.select(
             pl.col("LATEST ISSUED TIME INCLUSIVE")
         ).max().collect().item(row=0, column=0)
 
-data_manager = DataManager(["data/ABRFC.evaluation.csv.gz"])
+evaluation_data = EvaluationCSVManager(["data/ABRFC.evaluation.csv.gz"])
 
-# print(data_manager.query(
-#     (pl.col("EARLIEST LEAD TIME") == 0),
-#     (pl.col("SAMPLE QUANTILE").is_null()),
-#     (pl.col("EVALUATION PERIOD") == pl.duration(days=90)),
-#     (pl.col("METRIC NAME") == "BIAS FRACTION"),
-#     select=["LEFT FEATURE NAME", "STATISTIC"]
-#     ).collect())
-print(data_manager.feature_mapping)
+print(evaluation_data.load_metric_map(
+    metric_name="BIAS FRACTION",
+    earliest_lead_time=0
+))
 # TODO setup SiteSelector to work with functions that retrieve data
 quit()
 
