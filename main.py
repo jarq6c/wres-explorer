@@ -264,10 +264,33 @@ class SiteSelector:
             options=metric_names
         )
         self._lead_time_slider = pn.widgets.DiscreteSlider(
-            name="Earliest Lead Time",
+            name="Earliest Lead Hours",
             options=lead_times,
             value=lead_times[0]
         )
+        lead_backward = pn.widgets.Button(name='\u25c0', width=50)
+        lead_forward = pn.widgets.Button(name='\u25b6', width=50)
+
+        # Lead time increment
+        def update_lead_time_value(click, direction: str):
+            if not click:
+                return
+            current_value = self._lead_time_slider.value
+            idx = self._lead_time_slider.options.index(current_value)
+            if direction == "forward":
+                if idx == len(self._lead_time_slider.options)-1:
+                    return
+                updated = self._lead_time_slider.options[idx+1]
+                self._lead_time_slider.value = updated
+            if direction == "backward":
+                if idx == 0:
+                    return
+                updated = self._lead_time_slider.options[idx-1]
+                self._lead_time_slider.value = updated
+        pn.bind(update_lead_time_value, lead_backward, watch=True,
+            direction="backward")
+        pn.bind(update_lead_time_value, lead_forward, watch=True,
+            direction="forward")
 
         # Build layout elements
         detail_card = pn.Card(
@@ -278,7 +301,8 @@ class SiteSelector:
                     f"**End date**: {self.evaluation_data.end_date}<br>"
                 ),
                 self._selected_metric,
-                self._lead_time_slider
+                self._lead_time_slider,
+                pn.Row(lead_backward, lead_forward)
             ),
             title="Evaluation Details",
             collapsible=False,
@@ -386,6 +410,25 @@ class SiteSelector:
                     )
             self._map_pane.object = self.figure_data
         pn.bind(update_metric_scatter, self._selected_metric.param.value,
+                watch=True)
+        
+        def update_lead_time_scatter(lead_time):
+            metric_label = self._selected_metric.value
+            metrics = self.evaluation_data.load_metric_map(
+                metric_name=metric_label,
+                earliest_lead_time=lead_time
+            )
+            scatter_map["marker"].update(dict(
+                color=metrics["STATISTIC"]
+            ))
+            if "map.center" in self._map_pane.relayout_data:
+                self.update_zoom(
+                    self._map_pane.relayout_data["map.center"]["lat"],
+                    self._map_pane.relayout_data["map.center"]["lon"],
+                    self._map_pane.relayout_data["map.zoom"]
+                    )
+            self._map_pane.object = self.figure_data
+        pn.bind(update_lead_time_scatter, self._lead_time_slider.param.value,
                 watch=True)
 
         # Final layout
