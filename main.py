@@ -28,16 +28,14 @@ DTYPE_MAPPING: dict[str, pl.DataType] = {
 @dataclass
 class DataManager:
     """Dataclass for managing and retrieving WRES evaluation output."""
-    file_list: list[str] | None = None
+    file_list: list[str]
     dtype_mapping: dict[str, pl.DataType] | None = None
 
     def __post_init__(self):
         if self.dtype_mapping is None:
             self.dtype_mapping = DTYPE_MAPPING
 
-    def load_dataframe(self) -> pl.DataFrame:
-        """Lazily scan input files and return dataframe."""
-        return pl.scan_csv(
+        self.dataframe = pl.scan_csv(
             self.file_list,
             schema_overrides=self.dtype_mapping
             ).select(list(self.dtype_mapping.keys())
@@ -53,58 +51,59 @@ class DataManager:
                         "LATEST LEAD TIME").cast(pldt.Int32)
             )
     
-    def load_feature_mapping(self) -> pl.DataFrame:
-        return self.load_dataframe().select(
-            pl.col("LEFT FEATURE DESCRIPTION"),
-            pl.col("LEFT FEATURE NAME"),
-            pl.col("RIGHT FEATURE NAME"),
-            pl.col("LEFT FEATURE WKT")
-        ).unique()
-    
-    def load_metrics(
+    def query(
         self,
         *filters,
         select: list[str] | None = None
         ) -> pl.DataFrame:
         if select is None:
-            return self.load_dataframe(
-                ).filter(
+            return self.dataframe.filter(
                     *filters
                 )
-        return self.load_dataframe(
-            ).filter(
+        return self.dataframe.filter(
                 *filters
             ).select(select)
     
     @property
+    def feature_mapping(self) -> gpd.GeoDataFrame:
+        df = self.dataframe.select(
+            pl.col("LEFT FEATURE DESCRIPTION"),
+            pl.col("LEFT FEATURE NAME"),
+            pl.col("RIGHT FEATURE NAME"),
+        ).unique().collect().to_pandas().set_index("LEFT FEATURE NAME")
+        df["geometry"] = self.geometry
+        return gpd.GeoDataFrame(df)
+    
+    @property
     def geometry(self) -> gpd.GeoSeries:
-        return gpd.GeoSeries.from_wkt(
-            self.load_feature_mapping().select(
-                pl.col("LEFT FEATURE WKT")
-            ).collect().to_pandas()["LEFT FEATURE WKT"]
-        )
+        df = self.dataframe.select(
+            pl.col("LEFT FEATURE NAME"),
+            pl.col("LEFT FEATURE WKT")
+        ).unique().collect().to_pandas().set_index("LEFT FEATURE NAME")
+        return gpd.GeoSeries.from_wkt(df["LEFT FEATURE WKT"])
     
     @property
     def start_date(self) -> datetime:
-        return self.load_dataframe().select(
+        return self.dataframe.select(
             pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
         ).min().collect().item(row=0, column=0)
     
     @property
     def end_date(self) -> datetime:
-        return self.load_dataframe().select(
+        return self.dataframe.select(
             pl.col("LATEST ISSUED TIME INCLUSIVE")
         ).max().collect().item(row=0, column=0)
 
 data_manager = DataManager(["data/ABRFC.evaluation.csv.gz"])
 
-print(data_manager.load_metrics(
-    (pl.col("EARLIEST LEAD TIME") == 0),
-    (pl.col("SAMPLE QUANTILE").is_null()),
-    (pl.col("EVALUATION PERIOD") == pl.duration(days=90)),
-    (pl.col("METRIC NAME") == "BIAS FRACTION"),
-    select=["LEFT FEATURE NAME", "STATISTIC"]
-    ).collect())
+# print(data_manager.query(
+#     (pl.col("EARLIEST LEAD TIME") == 0),
+#     (pl.col("SAMPLE QUANTILE").is_null()),
+#     (pl.col("EVALUATION PERIOD") == pl.duration(days=90)),
+#     (pl.col("METRIC NAME") == "BIAS FRACTION"),
+#     select=["LEFT FEATURE NAME", "STATISTIC"]
+#     ).collect())
+print(data_manager.feature_mapping)
 # TODO setup SiteSelector to work with functions that retrieve data
 quit()
 
