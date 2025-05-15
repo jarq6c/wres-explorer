@@ -364,6 +364,12 @@ class SiteSelector:
                 "Latitude: %{lat}<br><br>"
                 f"{metric_label}: " + "%{marker.color:.2f}<br>"
             ))
+            if "map.center" in self._map_pane.relayout_data:
+                self.update_zoom(
+                    self._map_pane.relayout_data["map.center"]["lat"],
+                    self._map_pane.relayout_data["map.center"]["lon"],
+                    self._map_pane.relayout_data["map.zoom"]
+                    )
             self._map_pane.object = self.figure_data
         pn.bind(update_metric_scatter, self._selected_metric.param.value,
                 watch=True)
