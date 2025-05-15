@@ -149,10 +149,11 @@ class SiteSelector:
     """
     model_name: str
     evaluation_data: EvaluationCSVManager
-    _freeze_updates: bool = False
-    _layout: go.Layout | None = None
-    _map_pane: pn.pane.Plotly | None = None
-    _left_feature_selector: pn.widgets.AutocompleteInput | None = None
+
+    def __post_init__(self) -> None:
+        self._freeze_updates: bool = False
+        self._left_feature_selector = None
+        self._selected_metric = None
 
     def generate(self) -> pn.Row:
         # Load features and metric data
@@ -401,10 +402,16 @@ class SiteSelector:
         self._map_pane.relayout_data.update({"map.zoom": zoom})
     
     @property
-    def selected(self) -> Parameter:
+    def selected_feature(self) -> Parameter:
         if self._left_feature_selector is None:
             raise RuntimeError("Must run generate before accessing parameter")
         return self._left_feature_selector.param.value
+    
+    @property
+    def selected_metric(self) -> Parameter:
+        if self._selected_metric is None:
+            raise RuntimeError("Must run generate before accessing parameter")
+        return self._selected_metric.param.value
 
 def get_site_selector() -> pn.Row:
     return SiteSelector(
