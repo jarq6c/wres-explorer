@@ -156,7 +156,8 @@ class SiteSelector:
 
     def generate(self) -> pn.Row:
         # Load features and metric data
-        metric_label = "BIAS FRACTION"
+        metric_names = self.evaluation_data.metric_names
+        metric_label = metric_names[0]
         features = self.evaluation_data.feature_mapping.reset_index()
         metrics = self.evaluation_data.load_metric_map(
             metric_name=metric_label,
@@ -205,7 +206,7 @@ class SiteSelector:
             "NWM Feature ID: %{customdata[2]}<br>"
             "Longitude: %{lon}<br>"
             "Latitude: %{lat}<br><br>"
-            "Bias Fraction: %{marker.color:.2f}<br>"
+            f"{metric_label}: " + "%{marker.color:.2f}<br>"
         )
 
         # Layout configuration
@@ -251,7 +252,7 @@ class SiteSelector:
         )
         self._selected_metric = pn.widgets.Select(
             name="Metric",
-            options=self.evaluation_data.metric_names
+            options=metric_names
         )
 
         # Build layout elements
