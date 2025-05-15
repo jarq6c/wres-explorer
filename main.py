@@ -135,6 +135,12 @@ class EvaluationCSVManager:
     def metric_names(self) -> list[str]:
         return self._dataframe.select(
             "METRIC NAME").unique().collect()["METRIC NAME"].to_list()
+    
+    @property
+    def earliest_lead_times(self) -> list[int]:
+        return self._dataframe.select(
+            "EARLIEST LEAD TIME").unique(
+            ).collect()["EARLIEST LEAD TIME"].to_list()
 
 METRIC_COLORBAR_LIMITS: dict[str, tuple[float, float]] = {
     "BIAS FRACTION": (-1.0, 1.0)
@@ -154,15 +160,17 @@ class SiteSelector:
         self._freeze_updates: bool = False
         self._left_feature_selector = None
         self._selected_metric = None
+        self._lead_time_slider = None
 
     def generate(self) -> pn.Row:
         # Load features and metric data
         metric_names = self.evaluation_data.metric_names
+        lead_times = self.evaluation_data.earliest_lead_times
         metric_label = metric_names[0]
         features = self.evaluation_data.feature_mapping.reset_index()
         metrics = self.evaluation_data.load_metric_map(
             metric_name=metric_label,
-            earliest_lead_time=0
+            earliest_lead_time=lead_times[0]
         )
 
         # Selection highlight marker
@@ -255,6 +263,11 @@ class SiteSelector:
             name="Metric",
             options=metric_names
         )
+        self._lead_time_slider = pn.widgets.DiscreteSlider(
+            name="Earliest Lead Time",
+            options=lead_times,
+            value=lead_times[0]
+        )
 
         # Build layout elements
         detail_card = pn.Card(
@@ -264,7 +277,8 @@ class SiteSelector:
                     f"**Start date**: {self.evaluation_data.start_date}<br>"
                     f"**End date**: {self.evaluation_data.end_date}<br>"
                 ),
-                self._selected_metric
+                self._selected_metric,
+                self._lead_time_slider
             ),
             title="Evaluation Details",
             collapsible=False,
@@ -344,19 +358,6 @@ class SiteSelector:
             scatter_map.update(dict(
                 lat=metrics["geometry"].y,
                 lon=metrics["geometry"].x,
-                marker=dict(
-                    size=15,
-                    color=metrics["STATISTIC"],
-                    colorscale=cc.gouldian,
-                    colorbar=dict(
-                        title=dict(
-                            text=metric_label,
-                            side="right"
-                            )
-                        ),
-                        cmin=cmin,
-                        cmax=cmax
-                    ),
                 customdata=features.drop("geometry", axis=1),
                 hovertemplate=
                 "%{customdata[1]}<br>"
@@ -365,6 +366,17 @@ class SiteSelector:
                 "Longitude: %{lon}<br>"
                 "Latitude: %{lat}<br><br>"
                 f"{metric_label}: " + "%{marker.color:.2f}<br>"
+            ))
+            scatter_map["marker"].update(dict(
+                color=metrics["STATISTIC"],
+                colorbar=dict(
+                    title=dict(
+                        text=metric_label,
+                        side="right"
+                        )
+                    ),
+                    cmin=cmin,
+                    cmax=cmax
             ))
             if "map.center" in self._map_pane.relayout_data:
                 self.update_zoom(
@@ -412,6 +424,12 @@ class SiteSelector:
         if self._selected_metric is None:
             raise RuntimeError("Must run generate before accessing parameter")
         return self._selected_metric.param.value
+    
+    @property
+    def selected_lead_time(self) -> Parameter:
+        if self._lead_time_slider is None:
+            raise RuntimeError("Must run generate before accessing parameter")
+        return self._lead_time_slider.param.value
 
 def get_site_selector() -> pn.Row:
     return SiteSelector(
