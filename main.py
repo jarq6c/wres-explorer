@@ -97,6 +97,14 @@ class EvaluationCSVManager:
         df["geometry"] = self.geometry
         return gpd.GeoDataFrame(df)
     
+    def metric_range(self, metric_name: str) -> tuple[float, float]:
+        df = self.query(
+            (pl.col("METRIC NAME") == metric_name),
+            select=["STATISTIC"]
+            )
+        return (df.min().collect().item(row=0, column=0),
+            df.max().collect().item(row=0, column=0))
+
     @property
     def dataframe(self) -> pl.LazyFrame:
         return self._dataframe
@@ -155,12 +163,15 @@ class SiteSelector:
     """
     model_name: str
     evaluation_data: EvaluationCSVManager
+    metric_colorbar_limits: dict[str, tuple[float, float]] | None = None
 
     def __post_init__(self) -> None:
         self._freeze_updates: bool = False
         self._left_feature_selector = None
         self._selected_metric = None
         self._lead_time_slider = None
+        if self.metric_colorbar_limits is None:
+            self.metric_colorbar_limits = METRIC_COLORBAR_LIMITS
 
     def generate(self) -> pn.Row:
         # Load features and metric data
@@ -192,7 +203,11 @@ class SiteSelector:
         )
 
         # Main map
-        cmin, cmax = METRIC_COLORBAR_LIMITS.get(metric_label, (None, None))
+        self.metric_colorbar_limits.update({
+            "SAMPLE SIZE": self.evaluation_data.metric_range("SAMPLE SIZE")
+        })
+        cmin, cmax = self.metric_colorbar_limits.get(
+            metric_label, (None, None))
         scatter_map = go.Scattermap(
             showlegend=False,
             name="",
@@ -268,8 +283,8 @@ class SiteSelector:
             options=lead_times,
             value=lead_times[0]
         )
-        lead_backward = pn.widgets.Button(name='\u25c0', width=50)
-        lead_forward = pn.widgets.Button(name='\u25b6', width=50)
+        lead_backward = pn.widgets.Button(name="\u25c0", width=50)
+        lead_forward = pn.widgets.Button(name="\u25b6", width=50)
 
         # Lead time increment
         def update_lead_time_value(click, direction: str):
@@ -378,7 +393,8 @@ class SiteSelector:
                 metric_name=metric_label,
                 earliest_lead_time=0
             )
-            cmin, cmax = METRIC_COLORBAR_LIMITS.get(metric_label, (None, None))
+            cmin, cmax = self.metric_colorbar_limits.get(
+                metric_label, (None, None))
             scatter_map.update(dict(
                 lat=metrics["geometry"].y,
                 lon=metrics["geometry"].x,
