@@ -457,7 +457,7 @@ class SiteSelector:
             self,
             lat: float,
             lon: float,
-            zoom: int = 5
+            zoom: int = 7
             ) -> None:
         if self._layout is None:
             return
