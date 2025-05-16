@@ -16,9 +16,13 @@ DTYPE_MAPPING: dict[str, pl.DataType] = {
     "LEFT FEATURE DESCRIPTION": pldt.String,
     "RIGHT FEATURE NAME": pldt.String,
     "LATEST ISSUED TIME INCLUSIVE": pldt.Datetime,
+    "EARLIEST VALID TIME EXCLUSIVE": pldt.Datetime,
+    "LATEST VALID TIME INCLUSIVE": pldt.Datetime,
     "EARLIEST ISSUED TIME EXCLUSIVE": pldt.Datetime,
     "EARLIEST LEAD DURATION EXCLUSIVE": pldt.String,
     "LATEST LEAD DURATION INCLUSIVE": pldt.String,
+    "EVENT THRESHOLD NAME": pldt.Categorical,
+    "EVENT THRESHOLD LOWER VALUE": pldt.Float32,
     "METRIC NAME": pldt.Categorical,
     "SAMPLE QUANTILE": pldt.Float32,
     "STATISTIC": pldt.Float32
@@ -47,7 +51,13 @@ class EvaluationCSVManager:
 
         self._dataframe = pl.scan_csv(
             self.file_list,
-            schema_overrides=self.dtype_mapping
+            schema_overrides=self.dtype_mapping,
+            null_values=[
+                "-1000000000-01-01T00:00:00Z",
+                "+1000000000-12-31T23:59:59.999999999Z",
+                "PT-2562047788015215H-30M-8S",
+                "PT2562047788015215H30M7.999999999S"
+            ]
             ).select(list(self.dtype_mapping.keys())
             ).with_columns(
                 (pl.col("LATEST ISSUED TIME INCLUSIVE") -
@@ -55,10 +65,10 @@ class EvaluationCSVManager:
                 ).alias("EVALUATION PERIOD"),
                 pl.col("EARLIEST LEAD DURATION EXCLUSIVE"
                     ).str.extract("(\\d+)").alias(
-                        "EARLIEST LEAD TIME").cast(pldt.Int32),
+                        "EARLIEST LEAD TIME").cast(pldt.Int32).fill_null(0),
                 pl.col("LATEST LEAD DURATION INCLUSIVE"
                     ).str.extract("(\\d+)").alias(
-                        "LATEST LEAD TIME").cast(pldt.Int32)
+                        "LATEST LEAD TIME").cast(pldt.Int32).fill_null(0)
             )
     
     def query(
@@ -78,9 +88,14 @@ class EvaluationCSVManager:
             self,
             metric_name: str,
             earliest_lead_time: int,
+            threshold: str | None = None,
             sample_quantile: float = np.nan,
             evaluation_period: pl.Duration | None = None,
             ) -> gpd.GeoDataFrame:
+        if threshold is None:
+            thold_filter = pl.col("EVENT THRESHOLD NAME").is_null()
+        else:
+            thold_filter = pl.col("EVENT THRESHOLD NAME") == threshold
         if np.isnan(sample_quantile):
             sq_filter = pl.col("SAMPLE QUANTILE").is_null()
         else:
@@ -90,6 +105,7 @@ class EvaluationCSVManager:
         df = self.query(
             (pl.col("EARLIEST LEAD TIME") == earliest_lead_time),
             sq_filter,
+            thold_filter,
             (pl.col("EVALUATION PERIOD") == evaluation_period),
             (pl.col("METRIC NAME") == metric_name),
             select=["LEFT FEATURE NAME", "STATISTIC"]
@@ -130,13 +146,13 @@ class EvaluationCSVManager:
     @property
     def start_date(self) -> datetime:
         return self._dataframe.select(
-            pl.col("EARLIEST ISSUED TIME EXCLUSIVE")
+            pl.col("EARLIEST VALID TIME EXCLUSIVE")
         ).min().collect().item(row=0, column=0)
     
     @property
     def end_date(self) -> datetime:
         return self._dataframe.select(
-            pl.col("LATEST ISSUED TIME INCLUSIVE")
+            pl.col("LATEST VALID TIME INCLUSIVE")
         ).max().collect().item(row=0, column=0)
     
     @property
@@ -149,6 +165,12 @@ class EvaluationCSVManager:
         return self._dataframe.select(
             "EARLIEST LEAD TIME").unique(
             ).collect()["EARLIEST LEAD TIME"].to_list()
+    
+    @property
+    def thresholds(self) -> list[str]:
+        return self._dataframe.select(
+            "EVENT THRESHOLD NAME").unique(
+            ).collect()["EVENT THRESHOLD NAME"].to_list()
 
 METRIC_COLORBAR_LIMITS: dict[str, tuple[float, float]] = {
     "BIAS FRACTION": (-1.0, 1.0)
@@ -177,11 +199,13 @@ class SiteSelector:
         # Load features and metric data
         metric_names = self.evaluation_data.metric_names
         lead_times = self.evaluation_data.earliest_lead_times
+        thresholds = self.evaluation_data.thresholds
         metric_label = metric_names[0]
         features = self.evaluation_data.feature_mapping.reset_index()
         metrics = self.evaluation_data.load_metric_map(
             metric_name=metric_label,
-            earliest_lead_time=lead_times[0]
+            earliest_lead_time=lead_times[0],
+            threshold=thresholds[0]
         )
 
         # Selection highlight marker
@@ -499,9 +523,31 @@ class SiteSelector:
         return self._lead_time_slider.param.value
 
 def get_site_selector() -> pn.Row:
+    # ifile = "data/ABRFC.evaluation.csv.gz"
+    ifile = "data/EANA/ABRFC.evaluation.csv.gz"
     return SiteSelector(
         model_name="NWM Medium Range Deterministic",
-        evaluation_data=EvaluationCSVManager(["data/ABRFC.evaluation.csv.gz"])
+        evaluation_data=EvaluationCSVManager([ifile])
     ).generate()
 
-pn.serve(get_site_selector)
+# pn.serve(get_site_selector)
+
+ifile = "data/EANA/ABRFC.evaluation.csv.gz"
+
+df = pl.scan_csv(
+    ifile,
+    schema_overrides=DTYPE_MAPPING,
+    null_values=[
+        "-1000000000-01-01T00:00:00Z",
+        "+1000000000-12-31T23:59:59.999999999Z",
+        "PT-2562047788015215H-30M-8S",
+        "PT2562047788015215H30M7.999999999S"
+    ]
+    ).filter(
+    pl.col("METRIC NAME") == "BIAS FRACTION",
+    pl.col("EVENT THRESHOLD NAME") == "RETRO_Q0",
+    # pl.col("EVENT THRESHOLD NAME").is_null(),
+    pl.col("SAMPLE QUANTILE").is_null(),
+    pl.col("EARLIEST LEAD DURATION EXCLUSIVE").is_null(),
+    pl.col("LEFT FEATURE NAME") == "07083710"
+).head().collect().write_csv("test.csv")
