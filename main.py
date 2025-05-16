@@ -308,6 +308,12 @@ class SiteSelector:
             direction="forward")
 
         # Build layout elements
+        modal = pn.Modal(
+            pn.Row(
+                pn.pane.Plotly(),
+                pn.pane.Plotly()
+                ),
+            name="Site Details")
         detail_card = pn.Card(
             pn.Column(
                 pn.pane.Markdown(
@@ -327,6 +333,7 @@ class SiteSelector:
         site_card = pn.Card(
             self._left_feature_selector,
             right_feature_selector,
+            modal,
             collapsible=False,
             title="Site Selection",
             margin=10,
@@ -356,6 +363,7 @@ class SiteSelector:
                         self._map_pane.relayout_data["map.center"]["lon"],
                         self._map_pane.relayout_data["map.zoom"]
                         )
+                modal.toggle()
             elif source == "left_value":
                 idx = self._left_feature_selector.options.index(event)
                 lon = features.iloc[idx, :]["geometry"].x
